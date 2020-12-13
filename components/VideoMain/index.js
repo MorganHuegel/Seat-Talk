@@ -1,6 +1,6 @@
 import React from 'react'
 import style from '../../styles/Components/VideoMain/VideoMain.module.css'
-import { AudioButton, VideoButton } from '../Buttons'
+import { AudioButton, VideoButton, ShareButton } from '../Buttons'
 
 export default class VideoMain extends React.Component {
     constructor(props) {
@@ -94,6 +94,8 @@ export default class VideoMain extends React.Component {
         }
     }
 
+    handleClickShareScreen = () => {}
+
     getUserMediaConstraints = () => ({
         video: this.state.isStreamingVideo,
         audio: this.state.isStreamingAudio,
@@ -106,19 +108,6 @@ export default class VideoMain extends React.Component {
             <div>
                 <video ref={this.ownVideo} />
                 {errorMessage && <p>{errorMessage}</p>}
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
-                <h1>Take up space</h1>
                 <div className={style.buttonContainer}>
                     <AudioButton
                         handleClick={this.handleClickAudio}
@@ -128,6 +117,7 @@ export default class VideoMain extends React.Component {
                         handleClick={this.handleClickVideo}
                         isStreaming={isStreamingVideo}
                     />
+                    <ShareButton handleClick={this.handleClickShareScreen} isStreaming={null} />
                 </div>
             </div>
         )
