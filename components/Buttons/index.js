@@ -4,9 +4,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMicrophone, faVideo, faDesktop } from '@fortawesome/free-solid-svg-icons'
 import Tooltip from '../Tooltip'
 
-const Button = ({ handleClick, isStreaming, icon, tooltip }) => {
+const Button = ({ handleClick, isStreaming, icon, tooltip, id }) => {
     return (
-        <button type="button" onClick={handleClick} className={style.button}>
+        <button
+            type="button"
+            onClick={handleClick}
+            className={`${style.button} ${isStreaming && style.isStreaming}`}
+            id={id}
+        >
             {!isStreaming && (
                 <span className={style.slash}>
                     <span />
@@ -30,6 +35,7 @@ const AudioButton = (props) => (
         {...props}
         icon={faMicrophone}
         tooltip={props.isStreaming ? 'Mute microphone' : 'Unmute microphone'}
+        id="audio-button"
     />
 )
 const VideoButton = (props) => (
@@ -37,6 +43,7 @@ const VideoButton = (props) => (
         {...props}
         icon={faVideo}
         tooltip={props.isStreaming ? 'Turn off video' : 'Turn on video'}
+        id="video-button"
     />
 )
 const ShareButton = (props) => (
@@ -44,6 +51,7 @@ const ShareButton = (props) => (
         {...props}
         icon={faDesktop}
         tooltip={props.isStreaming ? 'Stop Sharing' : 'Share Screen'}
+        id="share-button"
     />
 )
 

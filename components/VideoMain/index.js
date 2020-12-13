@@ -9,12 +9,15 @@ export default class VideoMain extends React.Component {
         this.state = {
             isStreamingVideo: false,
             isStreamingAudio: false,
+            isSharingScreen: false,
             errorMessage: '',
         }
         this.ownVideo = React.createRef()
     }
 
     handleClickVideo = () => {
+        document.getElementById('video-button').blur()
+
         // if it is currently playing, toggle it OFF
         if (this.state.isStreamingVideo) {
             this.ownVideo.current.srcObject
@@ -102,11 +105,11 @@ export default class VideoMain extends React.Component {
     })
 
     render() {
-        const { isStreamingAudio, isStreamingVideo, errorMessage } = this.state
+        const { isStreamingAudio, isStreamingVideo, isSharingScreen, errorMessage } = this.state
 
         return (
             <div>
-                <video ref={this.ownVideo} />
+                <video ref={this.ownVideo}>Foo bar</video>
                 {errorMessage && <p>{errorMessage}</p>}
                 <div className={style.buttonContainer}>
                     <AudioButton
@@ -117,7 +120,10 @@ export default class VideoMain extends React.Component {
                         handleClick={this.handleClickVideo}
                         isStreaming={isStreamingVideo}
                     />
-                    <ShareButton handleClick={this.handleClickShareScreen} isStreaming={null} />
+                    <ShareButton
+                        handleClick={this.handleClickShareScreen}
+                        isStreaming={isSharingScreen}
+                    />
                 </div>
             </div>
         )

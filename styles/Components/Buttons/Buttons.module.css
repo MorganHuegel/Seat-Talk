@@ -1,3 +1,4 @@
+/* BUTTON */
 .button {
     border-radius: 50%;
     background-color: white;
@@ -5,22 +6,35 @@
     height: 60px;
     margin: 0 20px;
     position: relative;
+    outline: none;
 }
-.button:hover {
+.button:hover,
+.button:focus {
     cursor: pointer;
     background-color: rgb(230, 230, 230);
 }
+.button.isStreaming {
+    border-color: red;
+    background-color: rgb(255, 220, 220);
+}
+.button.isStreaming:hover,
+.button.isStreaming:focus {
+    background-color: rgb(255, 240, 240);
+}
+
+/* TOOLTIP */
 .button .tooltip {
     visibility: hidden;
 }
-.button:hover .tooltip {
+.button:hover .tooltip,
+.button:focus .tooltip {
     visibility: visible;
 }
 
+/* ICON */
 .icon {
     font-size: 24px;
 }
-
 .slash {
     display: inline-block;
     transform: rotate(38deg);
