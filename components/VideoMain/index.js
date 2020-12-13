@@ -1,4 +1,6 @@
 import React from 'react'
+import style from '../../styles/Components/VideoMain/VideoMain.module.css'
+import { AudioButton, VideoButton } from '../Buttons'
 
 export default class VideoMain extends React.Component {
     constructor(props) {
@@ -12,15 +14,12 @@ export default class VideoMain extends React.Component {
         this.ownVideo = React.createRef()
     }
 
-    handleClickVideo = async () => {
+    handleClickVideo = () => {
         // if it is currently playing, toggle it OFF
         if (this.state.isStreamingVideo) {
             this.ownVideo.current.srcObject
                 .getVideoTracks()
                 .forEach((mediaTrack) => mediaTrack.stop())
-            if (!this.state.isStreamingAudio) {
-                this.ownVideo.current.srcObject = null
-            }
             return this.setState({ isStreamingVideo: false, errorMessage: '' })
         }
 
@@ -55,6 +54,46 @@ export default class VideoMain extends React.Component {
         }
     }
 
+    handleClickAudio = () => {
+        // if it is currently playing, toggle it OFF
+        if (this.state.isStreamingAudio) {
+            this.ownVideo.current.srcObject
+                .getAudioTracks()
+                .forEach((mediaTrack) => mediaTrack.stop())
+            return this.setState({ isStreamingAudio: false, errorMessage: '' })
+        }
+
+        // toggling ON
+        else {
+            this.setState({ isStreamingAudio: true, errorMessage: '' }, async () => {
+                const mediaDevices = window && window.navigator && window.navigator.mediaDevices
+                if (!mediaDevices) {
+                    return this.setState({
+                        isStreamingAudio: false,
+                        errorMessage: 'Cannot find media devices to stream audio.',
+                    })
+                }
+
+                try {
+                    const stream = await mediaDevices.getUserMedia(this.getUserMediaConstraints())
+                    this.ownVideo.current.srcObject = stream
+                    this.ownVideo.current.play()
+                } catch (e) {
+                    let errorMessage = e.message
+                    if (e instanceof DOMException && errorMessage === 'Permission denied') {
+                        errorMessage =
+                            'Permission denied to use audio media. Please allow this site to use your media. If using Google Chrome, click on Menu -> Settings -> Privacy and Security -> Site Settings'
+                    }
+
+                    return this.setState({
+                        isStreamingAudio: false,
+                        errorMessage,
+                    })
+                }
+            })
+        }
+    }
+
     getUserMediaConstraints = () => ({
         video: this.state.isStreamingVideo,
         audio: this.state.isStreamingAudio,
@@ -67,9 +106,29 @@ export default class VideoMain extends React.Component {
             <div>
                 <video ref={this.ownVideo} />
                 {errorMessage && <p>{errorMessage}</p>}
-                <button type="button" id="toggle-video" onClick={this.handleClickVideo}>
-                    Video - {isStreamingVideo ? 'ON' : 'OFF'}
-                </button>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <h1>Take up space</h1>
+                <div className={style.buttonContainer}>
+                    <AudioButton
+                        handleClick={this.handleClickAudio}
+                        isStreaming={isStreamingAudio}
+                    />
+                    <VideoButton
+                        handleClick={this.handleClickVideo}
+                        isStreaming={isStreamingVideo}
+                    />
+                </div>
             </div>
         )
     }
