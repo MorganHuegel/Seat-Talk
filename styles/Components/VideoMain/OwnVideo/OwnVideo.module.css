@@ -10,10 +10,13 @@
 
 .videoContainer video {
     width: 320px;
-    transition: width 0.3s;
+    height: 240px;
+    transition: width 0.3s, height 0.3s;
+    background-color: black;
 }
 
 .videoContainer video:hover {
     width: 600px;
-    transition: width 0.3s;
+    height: 450px;
+    transition: width 0.3s, height 0.3s;
 }
