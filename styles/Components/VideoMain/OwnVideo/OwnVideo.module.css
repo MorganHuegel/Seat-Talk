@@ -1,0 +1,19 @@
+.videoContainer {
+    position: absolute;
+    bottom: 80px; /* height of the bottons div */
+    background: rgba(0, 0, 0, 0);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.videoContainer video {
+    width: 320px;
+    transition: width 0.3s;
+}
+
+.videoContainer video:hover {
+    width: 600px;
+    transition: width 0.3s;
+}

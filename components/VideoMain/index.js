@@ -1,6 +1,7 @@
 import React from 'react'
 import style from '../../styles/Components/VideoMain/VideoMain.module.css'
 import { AudioButton, VideoButton, ShareButton } from '../Buttons'
+import OwnVideo from './OwnVideo'
 
 export default class VideoMain extends React.Component {
     constructor(props) {
@@ -109,7 +110,7 @@ export default class VideoMain extends React.Component {
 
         return (
             <div>
-                <video ref={this.ownVideo}>Foo bar</video>
+                <OwnVideo ref={this.ownVideo} />
                 {errorMessage && <p>{errorMessage}</p>}
                 <div className={style.buttonContainer}>
                     <AudioButton

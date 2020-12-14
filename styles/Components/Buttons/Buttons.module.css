@@ -14,12 +14,14 @@
     background-color: rgb(230, 230, 230);
 }
 .button.isStreaming {
-    border-color: red;
-    background-color: rgb(255, 220, 220);
+    border: 2px solid white;
+    background-color: red;
+    padding: 0px;
+    color: white;
 }
 .button.isStreaming:hover,
 .button.isStreaming:focus {
-    background-color: rgb(255, 240, 240);
+    background-color: rgb(255, 70, 70);
 }
 
 /* TOOLTIP */
