@@ -17,13 +17,15 @@ export default class VideoMain extends React.Component {
     }
 
     handleClickVideo = () => {
+        // remove focus so that user doesn't accidently hit ENTER to re-toggle it
         document.getElementById('video-button').blur()
 
         // if it is currently playing, toggle it OFF
         if (this.state.isStreamingVideo) {
-            this.ownVideo.current.srcObject
-                .getVideoTracks()
-                .forEach((mediaTrack) => mediaTrack.stop())
+            this.ownVideo.current.srcObject.getVideoTracks().forEach((mediaTrack) => {
+                mediaTrack.stop()
+                this.ownVideo.current.srcObject.removeTrack(mediaTrack)
+            })
             return this.setState({ isStreamingVideo: false, errorMessage: '' })
         }
 
@@ -59,11 +61,16 @@ export default class VideoMain extends React.Component {
     }
 
     handleClickAudio = () => {
+        // remove focus so that user doesn't accidently hit ENTER to re-toggle it
+        document.getElementById('audio-button').blur()
+
         // if it is currently playing, toggle it OFF
         if (this.state.isStreamingAudio) {
-            this.ownVideo.current.srcObject
-                .getAudioTracks()
-                .forEach((mediaTrack) => mediaTrack.stop())
+            this.ownVideo.current.srcObject.getAudioTracks().forEach((mediaTrack) => {
+                mediaTrack.stop()
+                this.ownVideo.current.srcObject.removeTrack(mediaTrack)
+            })
+
             return this.setState({ isStreamingAudio: false, errorMessage: '' })
         }
 

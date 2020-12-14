@@ -7,7 +7,6 @@ function Session() {
 
     return (
         <>
-            <p>{sessionId}</p>
             <VideoMain sessionId={sessionId} />
         </>
     )
