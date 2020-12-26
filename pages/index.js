@@ -12,7 +12,7 @@ export default function Home() {
 
             <h1 className={styles.mainLink}>
                 <Link href="/abc">
-                    <a>Session</a>
+                    <a>Room</a>
                 </Link>
             </h1>
         </div>
