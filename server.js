@@ -4,12 +4,11 @@ const server = require('http').createServer(app)
 const io = require('socket.io')(server)
 
 // Socket.io setup
+const { handleJoinRoom, handleDisconnecting, handleConnect } = require('./helpers/socket')
 io.on('connect', (socket) => {
-    // console.log('client connected: socket is...', socket)
-    console.log('-------------------------------')
-    console.log('client connected: socket is...', socket.client.id)
-    console.log('client connected: socket is...', socket.id)
-    io.emit('new', { newClientId: socket.client.id })
+    handleConnect(socket, io)
+    socket.on('joinRoom', ({ roomId }) => handleJoinRoom(socket, io, roomId))
+    socket.on('disconnecting', () => handleDisconnecting(socket, io))
 })
 
 // Next setup

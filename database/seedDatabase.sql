@@ -5,18 +5,41 @@ DROP DATABASE IF EXISTS seattalk;
 
 CREATE DATABASE seattalk;
 
-DROP TABLE IF EXISTS channels;
+DROP TABLE IF EXISTS rooms;
+DROP TABLE IF EXISTS room_clients;
+DROP TABLE IF EXISTS clients;
 
-CREATE TABLE channels(
+CREATE TABLE rooms(
     id serial PRIMARY KEY, 
     room_id VARCHAR NOT NULL, 
-    socket_id varchar not null unique, 
     opened_at timestamptz default now(), 
     closed_at timestamptz
 );
 
-INSERT INTO channels(room_id, socket_id, opened_at, closed_at)
+CREATE TABLE room_clients(
+    id serial PRIMARY KEY,
+    room_pk INT NOT NULL,
+    client_pk INT NOT NULL
+);
+
+CREATE TABLE clients(
+  id serial PRIMARY KEY,
+  client_id VARCHAR NOT NULL,
+  joined_at timestamptz default now(),
+  disconnected_at timestamptz
+);
+
+INSERT INTO rooms(room_id, opened_at, closed_at)
 VALUES 
-  ('abc', 'eeefff12345', '2020-08-20 04:10:25-07', '2020-08-20 04:13:26-07'),
-  ('abc', 'eeefff123456', '2020-08-20 04:10:25-07', null),
-  ('abc123', 'aaabbb54321', '2019-06-11 04:10:25-07', '2019-06-11 05:10:25-07');
+  ('testroom1', '2020-08-20 04:10:25-07', '2020-08-20 04:13:26-07'),
+  ('testroom2', '2019-06-11 04:10:25-07', '2019-06-11 05:10:25-07');
+
+INSERT INTO clients(client_id, joined_at, disconnected_at)
+VALUES 
+  ('testdummy1', '2020-08-20 04:10:25-07', '2020-08-20 04:13:26-07'),
+  ('testdummy2', '2019-06-11 04:10:25-07', '2019-06-11 05:10:25-07');
+
+INSERT INTO room_clients(room_pk, client_pk)
+VALUES 
+  (1, 1),
+  (1, 2)
