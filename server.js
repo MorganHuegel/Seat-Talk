@@ -4,11 +4,11 @@ const server = require('http').createServer(app)
 const io = require('socket.io')(server)
 
 // Socket.io setup
-const { handleJoinRoom, handleDisconnecting, handleConnect } = require('./helpers/socket')
+const { handleConnect, handleJoinRoom, handleDisconnect } = require('./helpers/socket')
 io.on('connect', (socket) => {
     handleConnect(socket, io)
     socket.on('joinRoom', ({ roomId }) => handleJoinRoom(socket, io, roomId))
-    socket.on('disconnecting', () => handleDisconnecting(socket, io))
+    socket.on('disconnect', () => handleDisconnect(socket, io))
 })
 
 // Next setup

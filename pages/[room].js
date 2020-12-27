@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useRouter } from 'next/router'
 import { io } from 'socket.io-client'
 import VideoMain from '../components/VideoMain'
@@ -22,9 +22,6 @@ class Room extends React.Component {
         })
         this.socket.on('newJoin', ({ allClientsInRoom }) => {
             this.setState({ allClientsInRoom })
-            // if (!this.state.allClientsInRoom.includes(clientId)) {
-            //     this.setState({ allClientsInRoom: [...this.state.allClientsInRoom, clientId] })
-            // }
         })
         this.socket.on('userLeftRoom', ({ clientId }) => {
             if (this.state.allClientsInRoom.includes(clientId)) {
@@ -39,8 +36,19 @@ class Room extends React.Component {
             }
             this.setState({ errorMessage })
         })
+        this.socket.on('userLeftRoom', ({ clientId }) => {
+            this.setState({
+                allClientsInRoom: this.state.allClientsInRoom.filter(
+                    (client) => client.client_id !== clientId
+                ),
+            })
+        })
 
         this.setState({ isLoading: false })
+    }
+
+    componentWillUnmount() {
+        this.socket.close()
     }
 
     render() {
