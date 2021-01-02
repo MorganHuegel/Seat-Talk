@@ -24,7 +24,10 @@ CREATE TABLE room_clients(
 
 CREATE TABLE clients(
   id serial PRIMARY KEY,
-  client_id VARCHAR NOT NULL,
+  socket_id VARCHAR NOT NULL,
+  is_sharing_audio boolean default FALSE,
+  is_sharing_video boolean default FALSE,
+  is_sharing_screen boolean default FALSE,
   joined_at timestamptz default now(),
   disconnected_at timestamptz
 );
@@ -34,7 +37,7 @@ VALUES
   ('testroom1', '2020-08-20 04:10:25-07', '2020-08-20 04:13:26-07'),
   ('testroom2', '2019-06-11 04:10:25-07', '2019-06-11 05:10:25-07');
 
-INSERT INTO clients(client_id, joined_at, disconnected_at)
+INSERT INTO clients(socket_id, joined_at, disconnected_at)
 VALUES 
   ('testdummy1', '2020-08-20 04:10:25-07', '2020-08-20 04:13:26-07'),
   ('testdummy2', '2019-06-11 04:10:25-07', '2019-06-11 05:10:25-07');

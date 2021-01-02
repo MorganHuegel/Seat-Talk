@@ -4,10 +4,30 @@ const server = require('http').createServer(app)
 const io = require('socket.io')(server)
 
 // Socket.io setup
-const { handleConnect, handleJoinRoom, handleDisconnect } = require('./helpers/socket')
+const {
+    handleConnect,
+    handleJoinRoom,
+    handleDisconnect,
+    handleWatcherJoin,
+    handleUpdateSharing,
+    handleCandidate,
+    handleOffer,
+} = require('./helpers/socket')
 io.on('connect', (socket) => {
     handleConnect(socket, io)
-    socket.on('joinRoom', ({ roomId }) => handleJoinRoom(socket, io, roomId))
+    socket.on('joinRoom', ({ roomId, clientDatabaseId }) =>
+        handleJoinRoom(socket, io, roomId, clientDatabaseId)
+    )
+    socket.on('updateSharing', (props) => handleUpdateSharing(socket, io, props))
+    socket.on('watcherJoin', ({ roomId, requestingSocketId }) =>
+        handleWatcherJoin(socket, io, roomId, requestingSocketId)
+    )
+    socket.on('offer', ({ offer, requestingSocketId }) =>
+        handleOffer(socket, io, offer, requestingSocketId)
+    )
+    socket.on('candidate', ({ socketId, candidate }) =>
+        handleCandidate(socket, io, socketId, candidate)
+    )
     socket.on('disconnect', () => handleDisconnect(socket, io))
 })
 

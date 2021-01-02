@@ -15,28 +15,30 @@ async function _getAllClientsInRoom(room_pk) {
 
 async function handleConnect(socket, io) {
     try {
-        const client_id = socket.client.id
+        const socket_id = socket.id
         const existing = await knex
             .select()
             .table('clients')
             .whereNull('disconnected_at')
-            .where({ client_id })
+            .where({ socket_id })
 
         if (existing.length > 0) {
             throw new Error(
                 'Server Error: There are multiple connected clients with same client ID ' +
-                    client_id
+                    socket_id
             )
         }
 
-        await knex('clients').insert({ client_id }).returning()
-        socket.emit('connectConfirm', {})
+        let insertResponse = await knex('clients').insert({ socket_id }).returning('id')
+        let clientDatabaseId = insertResponse[0]
+        socket.emit('connectConfirm', { clientDatabaseId })
     } catch (err) {
         _handleErrors(socket, err, 'handleConnect')
     }
 }
 
-async function handleJoinRoom(socket, io, roomId) {
+async function handleJoinRoom(socket, io, roomId, clientDatabaseId) {
+    // clientDatabaseId is the id column in 'clients' table
     try {
         let activeRooms = await knex
             .select()
@@ -50,45 +52,24 @@ async function handleJoinRoom(socket, io, roomId) {
             throw new Error('Yikes! There are more than one active rooms with ID ' + roomId)
         }
 
-        async function getClientPK() {
-            const clientData = await knex('clients')
-                .select('id')
-                .whereNull('disconnected_at')
-                .where({ client_id: socket.client.id })
-
-            if (clientData.length > 1) {
-                throw new Error('More than one active socket with client ID: ' + socket.client.id)
-            }
-            if (clientData.length === 0) {
-                throw new Error('Socket client no longer active')
-            }
-
-            return clientData[0].id
-        }
-
-        if (activeRooms.length === 1) {
-            socket.join(roomId)
-            let room_pk = activeRooms[0].id
-            const client_pk = await getClientPK()
-            await knex('room_clients').insert({ room_pk, client_pk })
-            const allClientsInRoom = await _getAllClientsInRoom(room_pk)
-            if (allClientsInRoom.length < 1) {
-                throw new Error('No clients found in room ', +roomId)
-            }
-            io.to(roomId).emit('newJoin', { allClientsInRoom })
-        }
-
+        let room_pk
         if (activeRooms.length === 0) {
-            socket.join(roomId)
-            const [room_pk] = await knex('rooms').insert({ room_id: roomId }).returning('id')
-            const client_pk = await getClientPK()
-            await knex('room_clients').insert({ room_pk, client_pk })
-            const allClientsInRoom = await _getAllClientsInRoom(room_pk)
-            if (allClientsInRoom.length < 1) {
-                throw new Error('No clients found in room ', +roomId)
-            }
-            io.to(roomId).emit('newJoin', { allClientsInRoom })
+            let roomData = await knex('rooms').insert({ room_id: roomId }).returning('id')
+            console.log('roomData:', roomData)
+            room_pk = roomData[0]
+        } else {
+            room_pk = activeRooms[0].id
         }
+
+        socket.join(roomId)
+        const client_pk = clientDatabaseId
+        console.log('room_pk', room_pk, client_pk)
+        await knex('room_clients').insert({ room_pk, client_pk })
+        const allClientsInRoom = await _getAllClientsInRoom(room_pk)
+        if (allClientsInRoom.length < 1) {
+            throw new Error('No clients found in room ' + roomId)
+        }
+        io.to(roomId).emit('newJoin', { allClientsInRoom, newSocketId: socket.id })
     } catch (error) {
         _handleErrors(socket, error, 'handleJoinRoom')
     }
@@ -96,14 +77,14 @@ async function handleJoinRoom(socket, io, roomId) {
 
 async function handleDisconnect(socket, io) {
     try {
-        const client_id = socket.client.id
+        const socket_id = socket.id
         const clientData = await knex('clients')
             .whereNull('disconnected_at')
-            .where({ client_id })
+            .where({ socket_id })
             .update({ disconnected_at: new Date().toISOString() }, ['id'])
 
         if (clientData.length === 0) {
-            throw new Error('Could not update client with ID ', client_id)
+            throw new Error('Could not update client with socket ID ', socket_id)
         }
 
         const client_pk = clientData[0].id
@@ -121,15 +102,70 @@ async function handleDisconnect(socket, io) {
                 throw new Error('Could not emit userLeftRoom event to other users')
             }
             const { room_id } = roomData[0]
-            io.to(room_id).emit('userLeftRoom', { clientId: client_id })
+            io.to(room_id).emit('userLeftRoom', { socket_id })
         }
     } catch (error) {
         _handleErrors(socket, error, 'handleDisconnect')
     }
 }
 
+async function handleWatcherJoin(socket, io, roomId, requestingSocketId) {
+    try {
+        const roomData = await knex('rooms')
+            .select('id')
+            .whereNull('closed_at')
+            .where({ room_id: roomId })
+        if (roomData.length > 1) {
+            throw new Error('Multiple rooms open with the ID: ' + roomId)
+        }
+        if (roomData.length === 0) {
+            throw new Error('Room ' + roomId + ' just closed.')
+        }
+        const room_pk = roomData[0].id
+        let allClientsInRoom = await _getAllClientsInRoom(room_pk)
+        allClientsSharing = allClientsInRoom.filter(
+            (client) =>
+                client.is_sharing_video || client.is_sharing_audio || client.is_sharing_screen
+        )
+
+        console.log('requestingSocketId: ', requestingSocketId)
+        allClientsSharing.forEach((client) => {
+            io.to(client.socket_id).emit('watcherRequest', { requestingSocketId })
+        })
+    } catch (error) {
+        _handleErrors(socket, error, 'handleWatcherJoin')
+    }
+}
+
+async function handleUpdateSharing(socket, io, props) {
+    try {
+        const { client_pk, is_sharing_video, is_sharing_audio, is_sharing_screen } = props
+        const updatedUser = await knex('clients')
+            .where({ id: client_pk })
+            .update({ is_sharing_audio, is_sharing_screen, is_sharing_video })
+            .returning('*')
+
+        socket.emit('updateSharing', { updatedUser: updatedUser[0] })
+    } catch (error) {
+        _handleErrors(socket, error, 'handleUpdateSharing')
+    }
+}
+
+async function handleOffer(socket, io, offer, requestingSocketId) {
+    io.to(requestingSocketId).emit('offer', { offer })
+}
+
+async function handleCandidate(socket, io, socketId, candidate) {
+    // console.log('hadnling candidate: ', socketId, candidate)
+    // io.to(socketId).emit("candidate", socket.id, message)
+}
+
 module.exports = {
     handleConnect,
     handleJoinRoom,
     handleDisconnect,
+    handleWatcherJoin,
+    handleUpdateSharing,
+    handleOffer,
+    handleCandidate,
 }

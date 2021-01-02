@@ -11,24 +11,33 @@ class Room extends React.Component {
             errorMessage: '',
             isLoading: true,
             allClientsInRoom: [],
+            clientDatabaseId: null,
         }
         this.socket = null
     }
 
     componentDidMount() {
+        const { roomId } = this.props
         this.socket = io()
-        this.socket.on('connectConfirm', () => {
-            this.socket.emit('joinRoom', { roomId: this.props.roomId })
+        this.socket.on('connectConfirm', ({ clientDatabaseId }) => {
+            this.setState({ clientDatabaseId }, () => {
+                this.socket.emit('joinRoom', { roomId, clientDatabaseId })
+            })
         })
-        this.socket.on('newJoin', ({ allClientsInRoom }) => {
-            this.setState({ allClientsInRoom })
+        this.socket.on('newJoin', ({ allClientsInRoom, newSocketId }) => {
+            this.setState({ allClientsInRoom }, () => {
+                if (this.socket.id === newSocketId) {
+                    this.socket.emit('watcherJoin', { roomId, requestingSocketId: newSocketId })
+                }
+            })
         })
-        this.socket.on('userLeftRoom', ({ clientId }) => {
-            if (this.state.allClientsInRoom.includes(clientId)) {
-                this.setState({
-                    allClientsInRoom: this.state.allClientsInRoom.filter((id) => id !== clientId),
-                })
-            }
+        this.socket.on('updateSharing', ({ updatedUser }) => {
+            const index = this.state.allClientsInRoom.findIndex(
+                (client) => client.id === updatedUser.id
+            )
+            const updatedAllClientsInRoom = [...this.state.allClientsInRoom]
+            updatedAllClientsInRoom[index] = updatedUser
+            this.setState({ allClientsInRoom: updatedAllClientsInRoom })
         })
         this.socket.on('error', ({ errorMessage }) => {
             if (!errorMessage) {
@@ -36,10 +45,10 @@ class Room extends React.Component {
             }
             this.setState({ errorMessage })
         })
-        this.socket.on('userLeftRoom', ({ clientId }) => {
+        this.socket.on('userLeftRoom', ({ socket_id }) => {
             this.setState({
                 allClientsInRoom: this.state.allClientsInRoom.filter(
-                    (client) => client.client_id !== clientId
+                    (client) => client.socket_id !== socket_id
                 ),
             })
         })
@@ -62,7 +71,13 @@ class Room extends React.Component {
         return (
             <>
                 <p>{JSON.stringify(allClientsInRoom)}</p>
-                <VideoMain />
+                {this.socket && (
+                    <VideoMain
+                        socket={this.socket}
+                        roomId={this.props.roomId}
+                        clientDatabaseId={this.state.clientDatabaseId}
+                    />
+                )}
             </>
         )
     }
