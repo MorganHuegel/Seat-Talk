@@ -55,7 +55,6 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId) {
         let room_pk
         if (activeRooms.length === 0) {
             let roomData = await knex('rooms').insert({ room_id: roomId }).returning('id')
-            console.log('roomData:', roomData)
             room_pk = roomData[0]
         } else {
             room_pk = activeRooms[0].id
@@ -63,7 +62,6 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId) {
 
         socket.join(roomId)
         const client_pk = clientDatabaseId
-        console.log('room_pk', room_pk, client_pk)
         await knex('room_clients').insert({ room_pk, client_pk })
         const allClientsInRoom = await _getAllClientsInRoom(room_pk)
         if (allClientsInRoom.length < 1) {
@@ -128,7 +126,6 @@ async function handleWatcherJoin(socket, io, roomId, requestingSocketId) {
                 client.is_sharing_video || client.is_sharing_audio || client.is_sharing_screen
         )
 
-        console.log('requestingSocketId: ', requestingSocketId)
         allClientsSharing.forEach((client) => {
             io.to(client.socket_id).emit('watcherRequest', { requestingSocketId })
         })
@@ -151,13 +148,16 @@ async function handleUpdateSharing(socket, io, props) {
     }
 }
 
-async function handleOffer(socket, io, offer, requestingSocketId) {
-    io.to(requestingSocketId).emit('offer', { offer })
+async function handleOffer(socket, io, offer, sendToSocketId) {
+    io.to(sendToSocketId).emit('offer', { offer, sentFromSocketId: socket.id })
 }
 
-async function handleCandidate(socket, io, socketId, candidate) {
-    // console.log('hadnling candidate: ', socketId, candidate)
-    // io.to(socketId).emit("candidate", socket.id, message)
+async function handleAnswer(socket, io, localDescription, sendToSocketId) {
+    io.to(sendToSocketId).emit('answer', { localDescription, sentFromSocketId: socket.id })
+}
+
+async function handleCandidate(socket, io, sendToSocketId, candidate) {
+    io.to(sendToSocketId).emit('candidate', { fromSocketId: socket.id, candidate })
 }
 
 module.exports = {
@@ -167,5 +167,6 @@ module.exports = {
     handleWatcherJoin,
     handleUpdateSharing,
     handleOffer,
+    handleAnswer,
     handleCandidate,
 }

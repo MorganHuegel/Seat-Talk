@@ -10,8 +10,9 @@ const {
     handleDisconnect,
     handleWatcherJoin,
     handleUpdateSharing,
-    handleCandidate,
     handleOffer,
+    handleAnswer,
+    handleCandidate,
 } = require('./helpers/socket')
 io.on('connect', (socket) => {
     handleConnect(socket, io)
@@ -22,11 +23,14 @@ io.on('connect', (socket) => {
     socket.on('watcherJoin', ({ roomId, requestingSocketId }) =>
         handleWatcherJoin(socket, io, roomId, requestingSocketId)
     )
-    socket.on('offer', ({ offer, requestingSocketId }) =>
-        handleOffer(socket, io, offer, requestingSocketId)
+    socket.on('offer', ({ offer, sendToSocketId }) =>
+        handleOffer(socket, io, offer, sendToSocketId)
     )
-    socket.on('candidate', ({ socketId, candidate }) =>
-        handleCandidate(socket, io, socketId, candidate)
+    socket.on('answer', ({ localDescription, sendToSocketId }) =>
+        handleAnswer(socket, io, localDescription, sendToSocketId)
+    )
+    socket.on('candidate', ({ sendToSocketId, candidate }) =>
+        handleCandidate(socket, io, sendToSocketId, candidate)
     )
     socket.on('disconnect', () => handleDisconnect(socket, io))
 })
