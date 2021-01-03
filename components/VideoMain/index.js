@@ -27,31 +27,26 @@ export default class VideoMain extends React.Component {
             }
 
             const peerConnection = new RTCPeerConnection(this.getRTCConfig())
+            peerConnection.addEventListener('iceconnectionstatechange', (event) => {
+                if (peerConnection.iceConnectionState === 'failed') {
+                    peerConnection.restartIce()
+                }
+            })
 
             let stream = this.ownVideo.current.srcObject
             stream.getTracks().forEach((track) => {
                 peerConnection.addTrack(track, stream)
             })
 
-            let candidates = []
             peerConnection.onicecandidate = (event) => {
-                // give time for other peer to create and save PeerConnection in state
                 if (event.candidate) {
-                    // candidates.push(event.candidate)
-                    // setTimeout(() => {
-                    //     candidates.forEach((candidate) => {
-                    //         socket.emit('candidate', {
-                    //             sendToSocketId: requestingSocketId,
-                    //             candidate,
-                    //         })
-                    //     })
-                    // }, 1000)
                     socket.emit('candidate', {
                         sendToSocketId: requestingSocketId,
                         candidate: event.candidate,
                     })
                 }
             }
+
             const offer = await peerConnection.createOffer()
             await peerConnection.setLocalDescription(offer)
 
@@ -66,21 +61,27 @@ export default class VideoMain extends React.Component {
             await peerConnection.setRemoteDescription(offer)
             const sdpAnswer = await peerConnection.createAnswer()
             await peerConnection.setLocalDescription(sdpAnswer)
+            peerConnection.addEventListener('iceconnectionstatechange', (event) => {
+                if (peerConnection.iceConnectionState === 'failed') {
+                    peerConnection.restartIce()
+                }
+            })
             let peerConnections = { ...this.state.peerConnections }
             peerConnections[sentFromSocketId] = peerConnection
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('candidate', {
+                        sendToSocketId: sentFromSocketId,
+                        candidate: event.candidate,
+                    })
+                }
+            }
+            peerConnection.ontrack = (event) => {
+                console.log('ontrack fired!: ', event)
+                // this.broadcastVideo.current.srcObject = event.streams[0]
+                // this.broadcastVideo.play()
+            }
             this.setState({ peerConnections }, () => {
-                peerConnection.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        socket.emit('candidate', {
-                            sendToSocketId: sentFromSocketId,
-                            candidate: event.candidate,
-                        })
-                    }
-                }
-                peerConnection.ontrack = (event) => {
-                    console.log('ontrack fired!: ', event)
-                    this.broadcastVideo.current.srcObject = event.streams[0]
-                }
                 socket.emit('answer', {
                     localDescription: peerConnection.localDescription,
                     sendToSocketId: sentFromSocketId,
@@ -97,79 +98,16 @@ export default class VideoMain extends React.Component {
                 let iceCandidate = new RTCIceCandidate(candidate)
                 let peerConnections = { ...this.state.peerConnections }
                 await peerConnections[fromSocketId].addIceCandidate(iceCandidate)
-                console.log('added icecandidate', iceCandidate)
             } catch (e) {
-                this.setState({ errorMessage: e.message })
+                // will call restartIce() in iceconnectionstatechange
             }
         })
+
         /*
-        // https://gabrieltanner.org/blog/webrtc-video-broadcast
-
-        socket.on('watcher', (id) => {
-            let peerConnections = {}
-            const peerConnection = new RTCPeerConnection(this.getRTCConfig())
-            peerConnections[id] = peerConnection
-
-            let stream = video.srcObject
-            stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream))
-
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('candidate', id, event.candidate)
-                }
-            }
-
-            peerConnection
-                .createOffer()
-                .then((sdp) => peerConnection.setLocalDescription(sdp))
-                .then(() => {
-                    socket.emit('offer', id, peerConnection.localDescription)
-                })
-        })
-
-        socket.on('answer', (id, description) => {
-            peerConnections[id].setRemoteDescription(description)
-        })
-
-        socket.on('candidate', (id, candidate) => {
-            peerConnections[id].addIceCandidate(new RTCIceCandidate(candidate))
-        })
-        // when joining, see if there are media already being shared
-        socket.emit('watcher')
-        // then listen for future media
-        socket.on('broadcaster', () => {
-            socket.emit('watcher')
-        })
-        socket.on('offer', (id, description) => {
-            const peerConnection = new RTCPeerConnection({
-                iceServers: [
-                    {
-                        urls: ['stun:stun.l.google.com:19302'],
-                    },
-                ],
-            })
-            this.peerConnection
-                .setRemoteDescription(description)
-                .then(() => this.peerConnection.createAnswer())
-                .then((sdp) => this.peerConnection.setLocalDescription(sdp))
-                .then(() => {
-                    socket.emit('answer', id, this.peerConnection.localDescription)
-                })
-            this.peerConnection.ontrack = (event) => {
-                video.srcObject = event.streams[0]
-            }
-            this.peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('candidate', id, event.candidate)
-                }
-            }
-        })
-        socket.on('candidate', (id, candidate) => {
-            peerConnection
-                .addIceCandidate(new RTCIceCandidate(candidate))
-                .catch((e) => console.error(e))
-        })
-        */
+         * WebRTC Resources:
+         *  https://gabrieltanner.org/blog/webrtc-video-broadcast
+         *  https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Connectivity
+         */
     }
 
     emitUpdateSharing = () => {
@@ -299,30 +237,11 @@ export default class VideoMain extends React.Component {
             errorMessage,
             peerConnections,
         } = this.state
-        let tracks = []
-        Object.values(peerConnections).forEach((connection) => {
-            const receivers = connection.getReceivers()
-            if (receivers.length > 0) {
-                receivers.forEach((receiver) => tracks.push(receiver.track))
-            }
-        })
-        if (tracks.length > 0) {
-            const stream = new MediaStream()
-            stream.addTrack(tracks[0])
-            this.broadcastVideo.current.srcObject = stream
-        }
 
         return (
             <div>
-                <BroadcastVideo ref={this.broadcastVideo} />
+                <BroadcastVideo ref={this.broadcastVideo} peerConnections={peerConnections} />
                 <OwnVideo ref={this.ownVideo} />
-                <button
-                    onClick={() => {
-                        console.log(this.broadcastVideo.current.srcObject.getTracks())
-                    }}
-                >
-                    Show Tracks
-                </button>
                 {errorMessage && <p>{errorMessage}</p>}
                 <div className={style.buttonContainer}>
                     <AudioButton handleClick={this.handleClickAudio} isStreaming={isSharingAudio} />
