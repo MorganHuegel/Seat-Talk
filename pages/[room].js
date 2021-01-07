@@ -69,16 +69,14 @@ class Room extends React.Component {
         }
 
         return (
-            <>
-                <p>{JSON.stringify(allClientsInRoom)}</p>
-                {this.socket && (
-                    <VideoMain
-                        socket={this.socket}
-                        roomId={this.props.roomId}
-                        clientDatabaseId={this.state.clientDatabaseId}
-                    />
-                )}
-            </>
+            this.socket && (
+                <VideoMain
+                    socket={this.socket}
+                    roomId={this.props.roomId}
+                    clientDatabaseId={this.state.clientDatabaseId}
+                    allClientsInRoom={allClientsInRoom}
+                />
+            )
         )
     }
 }

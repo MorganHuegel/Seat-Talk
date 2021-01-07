@@ -4,7 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAlignRight, faAlignLeft, faAlignCenter } from '@fortawesome/free-solid-svg-icons'
 
 const OwnVideo = React.forwardRef((props, ref) => {
-    const [justifyVideo, setJustifyVideo] = useState('center')
+    const screenWidth = window.innerWidth
+    const [justifyVideo, setJustifyVideo] = useState(screenWidth < 500 ? 'flex-start' : 'center')
 
     return (
         <div className={style.videoContainer} style={{ justifyContent: justifyVideo }}>

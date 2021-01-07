@@ -55,4 +55,10 @@ const ShareButton = (props) => (
     />
 )
 
-export { AudioButton, VideoButton, ShareButton }
+const PeerConnectionButton = (props) => (
+    <button type="button" onClick={props.onClick} className={style.peerConnectionButton}>
+        {props.text}
+    </button>
+)
+
+export { AudioButton, VideoButton, ShareButton, PeerConnectionButton }

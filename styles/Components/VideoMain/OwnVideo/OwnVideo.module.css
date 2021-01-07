@@ -24,6 +24,7 @@
     padding: 0px;
     color: white;
     font-size: 16px;
+    width: 16px;
 }
 .alignButtonContainer button:hover,
 .alignButtonContainer button:focus {
@@ -42,4 +43,20 @@
     width: 560px;
     height: 420px;
     transition: width 0.3s, height 0.3s;
+}
+
+@media only screen and (max-width: 500px) {
+    .videoContainer {
+        justify-content: flex-start;
+    }
+    .alignButtonContainer {
+        display: none;
+    }
+    .videoPlayer {
+        padding: 5px 5px 0 5px;
+    }
+    .videoPlayer video {
+        width: 80px;
+        height: 80px;
+    }
 }

@@ -1,0 +1,28 @@
+.container {
+    height: calc(100vh - 80px);
+}
+
+.connectionOptions {
+    height: 80px;
+    background-color: rgb(18, 115, 153);
+}
+
+.buttonContainer {
+    max-width: 1172px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.videoContainer {
+    background-color: black;
+    text-align: center;
+}
+
+.videoContainer video {
+    height: calc(100vh - 160px);
+    background-color: black;
+    max-width: 100vw;
+}

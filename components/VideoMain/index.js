@@ -237,10 +237,15 @@ export default class VideoMain extends React.Component {
             errorMessage,
             peerConnections,
         } = this.state
+        const { allClientsInRoom } = this.props
 
         return (
             <div>
-                <BroadcastVideo ref={this.broadcastVideo} peerConnections={peerConnections} />
+                <BroadcastVideo
+                    ref={this.broadcastVideo}
+                    peerConnections={peerConnections}
+                    allClientsInRoom={allClientsInRoom}
+                />
                 <OwnVideo ref={this.ownVideo} />
                 {errorMessage && <p>{errorMessage}</p>}
                 <div className={style.buttonContainer}>

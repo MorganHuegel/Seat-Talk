@@ -36,6 +36,12 @@
 /* ICON */
 .icon {
     font-size: 24px;
+    line-height: 24px;
+}
+.icon > svg {
+    width: 24px;
+    height: 24px;
+    vertical-align: top;
 }
 .slash {
     display: inline-block;
@@ -54,4 +60,23 @@
 }
 .slash > span:nth-child(2) {
     background-color: white;
+}
+
+.peerConnectionButton {
+    background-color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid gray;
+    margin-right: 20px;
+}
+.peerConnectionButton.active {
+    background-color: gray;
+    color: white;
+    border: 1px solid white;
+    box-shadow: 0px 0px 5px black;
+}
+.peerConnectionButton:hover,
+.peerConnectionButton:focus {
+    cursor: pointer;
+    background-color: rgb(230, 230, 230);
 }
