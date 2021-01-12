@@ -56,7 +56,11 @@ const ShareButton = (props) => (
 )
 
 const PeerConnectionButton = (props) => (
-    <button type="button" onClick={props.onClick} className={style.peerConnectionButton}>
+    <button
+        type="button"
+        onClick={props.onClick}
+        className={`${style.peerConnectionButton} ${props.isActive && style.active}`}
+    >
         {props.text}
     </button>
 )

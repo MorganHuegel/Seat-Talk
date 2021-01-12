@@ -69,14 +69,18 @@
     border: 1px solid gray;
     margin-right: 20px;
 }
+.peerConnectionButton:hover,
+.peerConnectionButton:focus {
+    cursor: pointer;
+    background-color: rgb(230, 230, 230);
+}
 .peerConnectionButton.active {
     background-color: gray;
     color: white;
     border: 1px solid white;
     box-shadow: 0px 0px 5px black;
 }
-.peerConnectionButton:hover,
-.peerConnectionButton:focus {
-    cursor: pointer;
-    background-color: rgb(230, 230, 230);
+.peerConnectionButton.active:hover,
+.peerConnectionButton.active:focus {
+    background-color: rgb(120, 120, 120);
 }
