@@ -6,21 +6,23 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
     let { peerConnections, allClientsInRoom } = props
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
     useEffect(() => {
-        let defaultClient = allClientsInRoom.find(
-            (client) => client.is_sharing_video || client.is_sharing_screen
-        )
+        if (!currentVideoTrackId) {
+            let defaultConnection = Object.values(peerConnections).find((peerConnection) => {
+                return peerConnection
+                    .getReceivers()
+                    .find((receiver) => receiver.track.kind === 'video')
+            })
+            console.log(
+                'in useEffect',
+                defaultConnection &&
+                    defaultConnection.getReceivers().find((r) => r.track.kind === 'video')
+            )
 
-        // If someone is sharing and connection has been established, connect to that media
-        if (
-            currentVideoTrackId === null &&
-            defaultClient &&
-            defaultClient.socket_id &&
-            Object.keys(peerConnections).includes(defaultClient.socket_id)
-        ) {
-            let receivers = peerConnections[defaultClient.socket_id].getReceivers()
-            let receiver = receivers.find((receiver) => receiver.track.kind === 'video')
-            let trackId = receiver ? receiver.track.id : null
-            setCurrentVideoTrackId(trackId)
+            if (defaultConnection) {
+                setCurrentVideoTrackId(
+                    defaultConnection.getReceivers().find((r) => r.track.kind === 'video').track.id
+                )
+            }
         }
     }, [peerConnections])
 
@@ -53,17 +55,18 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
                             const clientInfo = allClientsInRoom.find(
                                 (client) => client.socket_id === socketId
                             )
-                            if (
-                                !clientInfo ||
-                                (!clientInfo.is_sharing_video && !clientInfo.is_sharing_screen)
-                            ) {
-                                return null
-                            }
+                            // if (
+                            //     !clientInfo ||
+                            //     (!clientInfo.is_sharing_video && !clientInfo.is_sharing_screen)
+                            // ) {
+                            //     return null
+                            // }
                             const displayName = clientInfo.socket_id
 
                             let receivers =
                                 peerConnections[socketId] &&
                                 peerConnections[socketId].getReceivers()
+                            // console.log('receivers', receivers)
                             let thisReceiver = receivers.find(
                                 (receiver) => receiver.track.kind === 'video'
                             )
@@ -72,7 +75,7 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
 
                             return (
                                 <React.Fragment key={socketId}>
-                                    {clientInfo.is_sharing_video && (
+                                    {true && (
                                         <PeerConnectionButton
                                             text={displayName + "'s Video"}
                                             onClick={(e) => {

@@ -13,6 +13,8 @@ const {
     handleOffer,
     handleAnswer,
     handleCandidate,
+    handleAddedPeerConnectionTrack,
+    handleRenegotiate,
 } = require('./helpers/socket')
 io.on('connect', (socket) => {
     handleConnect(socket, io)
@@ -32,6 +34,10 @@ io.on('connect', (socket) => {
     socket.on('candidate', ({ sendToSocketId, candidate }) =>
         handleCandidate(socket, io, sendToSocketId, candidate)
     )
+    socket.on('addedPeerConnectionTrack', ({ trackId, clients }) =>
+        handleAddedPeerConnectionTrack(socket, io, trackId, clients)
+    )
+    socket.on('renegotiate', ({ toSocketId }) => handleRenegotiate(socket, io, toSocketId))
     socket.on('disconnect', () => handleDisconnect(socket, io))
 })
 

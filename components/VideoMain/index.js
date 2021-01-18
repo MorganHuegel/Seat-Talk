@@ -8,9 +8,10 @@ export default class VideoMain extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            isSharingVideo: false,
-            isSharingAudio: false,
-            isSharingScreen: false,
+            audio_track_id: null,
+            video_track_id: null,
+            screen_audio_track_id: null,
+            screen_video_track_id: null,
             peerConnections: {},
             errorMessage: '',
         }
@@ -21,22 +22,20 @@ export default class VideoMain extends React.Component {
     componentDidMount() {
         const { socket, clientDatabaseId, roomId } = this.props
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
-            const { isSharingAudio, isSharingScreen, isSharingVideo } = this.state
-            if (!isSharingVideo && !isSharingAudio && !isSharingScreen) {
-                return
-            }
+            const { audio_track_id, screen_track_id, video_track_id } = this.state
 
-            const peerConnection = new RTCPeerConnection(this.getRTCConfig())
+            let peerConnection = new RTCPeerConnection(this.getRTCConfig())
             peerConnection.addEventListener('iceconnectionstatechange', (event) => {
                 if (peerConnection.iceConnectionState === 'failed') {
                     peerConnection.restartIce()
                 }
             })
-
-            let stream = this.ownVideo.current.srcObject
-            stream.getTracks().forEach((track) => {
-                peerConnection.addTrack(track, stream)
-            })
+            peerConnection.onnegotiationneeded = async (event) => {
+                console.log('onnegotiationneeded first')
+                const offer = await peerConnection.createOffer()
+                await peerConnection.setLocalDescription(offer)
+                socket.emit('offer', { offer, sendToSocketId: requestingSocketId })
+            }
 
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
@@ -45,6 +44,22 @@ export default class VideoMain extends React.Component {
                         candidate: event.candidate,
                     })
                 }
+            }
+
+            const mediaDevices = window && window.navigator && window.navigator.mediaDevices
+            if (audio_track_id || video_track_id) {
+                const userStream = await mediaDevices.getUserMedia(this.getUserMediaConstraints())
+                userStream.getTracks().forEach((track) => {
+                    peerConnection.addTrack(track, userStream)
+                })
+            }
+            if (screen_track_id) {
+                const displayStream = await mediaDevices.getDisplayMedia(
+                    this.getDisplayMediaConstraints()
+                )
+                displayStream.getTracks().forEach((track) => {
+                    peerConnection.addTrack(track, displayStream)
+                })
             }
 
             const offer = await peerConnection.createOffer()
@@ -66,8 +81,6 @@ export default class VideoMain extends React.Component {
                     peerConnection.restartIce()
                 }
             })
-            let peerConnections = { ...this.state.peerConnections }
-            peerConnections[sentFromSocketId] = peerConnection
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
                     socket.emit('candidate', {
@@ -76,11 +89,18 @@ export default class VideoMain extends React.Component {
                     })
                 }
             }
+            peerConnection.onnegotiationneeded = (event) => {
+                console.log('onnegotiationneeded second', event)
+            }
+
             peerConnection.ontrack = (event) => {
-                console.log('ontrack fired!: ', event)
+                console.log('ontrack', event)
+                // this.setState({ peerConnections: { ...this.state.peerConnections } })
                 // this.broadcastVideo.current.srcObject = event.streams[0]
                 // this.broadcastVideo.play()
             }
+            let peerConnections = { ...this.state.peerConnections }
+            peerConnections[sentFromSocketId] = peerConnection
             this.setState({ peerConnections }, () => {
                 socket.emit('answer', {
                     localDescription: peerConnection.localDescription,
@@ -113,113 +133,198 @@ export default class VideoMain extends React.Component {
     emitUpdateSharing = () => {
         this.props.socket.emit('updateSharing', {
             client_pk: this.props.clientDatabaseId,
-            is_sharing_video: this.state.isSharingVideo,
-            is_sharing_audio: this.state.isSharingAudio,
-            is_sharing_screen: this.state.isSharingScreen,
+            audio_track_id: this.state.audio_track_id,
+            video_track_id: this.state.video_track_id,
+            screen_audio_track_id: this.state.screen_audio_track_id,
+            screen_video_track_id: this.state.screen_video_track_id,
         })
     }
 
-    handleClickVideo = () => {
+    handleClickVideo = async () => {
         // remove focus so that user doesn't accidently hit ENTER to re-toggle it
         document.getElementById('video-button').blur()
 
         // if it is currently playing, toggle it OFF
-        if (this.state.isSharingVideo) {
-            this.ownVideo.current.srcObject.getVideoTracks().forEach((mediaTrack) => {
-                mediaTrack.stop()
-                this.ownVideo.current.srcObject.removeTrack(mediaTrack)
+        if (this.state.video_track_id) {
+            this.ownVideo.current.srcObject.getVideoTracks().forEach((videoTrack) => {
+                videoTrack.stop()
+                this.ownVideo.current.srcObject.removeTrack(videoTrack)
             })
-            return this.setState({ isSharingVideo: false, errorMessage: '' }, () => {
+            Object.values(this.state.peerConnections).forEach((connection) => {
+                const track = connection
+                    .getSenders()
+                    .find((sender) => sender.track.id === this.state.video_track_id)
+                connection.removeTrack(track)
+            })
+            return this.setState({ video_track_id: null, errorMessage: '' }, () => {
                 this.emitUpdateSharing()
             })
         }
 
         // toggling ON
         else {
-            this.setState({ isSharingVideo: true, errorMessage: '' }, async () => {
-                const mediaDevices = window && window.navigator && window.navigator.mediaDevices
-                if (!mediaDevices) {
-                    return this.setState({
-                        isSharingVideo: false,
-                        errorMessage: 'Cannot find media devices to stream video.',
-                    })
-                }
+            const mediaDevices = window && window.navigator && window.navigator.mediaDevices
+            if (!mediaDevices) {
+                return this.setState({
+                    video_track_id: null,
+                    errorMessage: 'Cannot find media devices to stream video.',
+                })
+            }
 
-                try {
-                    const stream = await mediaDevices.getUserMedia(this.getUserMediaConstraints())
-                    this.ownVideo.current.srcObject = stream
-                    this.ownVideo.current.play()
+            try {
+                const stream = await mediaDevices.getUserMedia({
+                    video: true,
+                    audio: !!this.state.audio_track_id,
+                })
+                const videoTrack = stream.getVideoTracks()[0]
+                this.ownVideo.current.srcObject = stream
+                this.ownVideo.current.play()
+                Object.values(this.state.peerConnections).forEach((connection) => {
+                    connection.addTrack(videoTrack)
+                })
+                this.setState({ video_track_id: videoTrack.id }, () => {
                     this.emitUpdateSharing()
-                } catch (e) {
-                    let errorMessage = e.message
-                    if (e instanceof DOMException && errorMessage === 'Permission denied') {
-                        errorMessage =
-                            'Permission denied to use video media. Please allow this site to use your media. If using Google Chrome, click on Menu -> Settings -> Privacy and Security -> Site Settings'
-                    }
-
-                    return this.setState({
-                        isSharingVideo: false,
-                        errorMessage,
-                    })
+                })
+            } catch (e) {
+                console.error(e)
+                let errorMessage = e.message
+                if (e instanceof DOMException && errorMessage === 'Permission denied') {
+                    errorMessage =
+                        'Permission denied to use video media. Please allow this site to use your media. If using Google Chrome, click on Menu -> Settings -> Privacy and Security -> Site Settings'
                 }
-            })
+
+                return this.setState({
+                    video_track_id: null,
+                    errorMessage,
+                })
+            }
         }
     }
 
-    handleClickAudio = () => {
+    handleClickAudio = async () => {
         // remove focus so that user doesn't accidently hit ENTER to re-toggle it
         document.getElementById('audio-button').blur()
 
         // if it is currently playing, toggle it OFF
-        if (this.state.isSharingAudio) {
-            this.ownVideo.current.srcObject.getAudioTracks().forEach((mediaTrack) => {
-                mediaTrack.stop()
-                this.ownVideo.current.srcObject.removeTrack(mediaTrack)
+        if (this.state.audio_track_id) {
+            Object.values(this.state.peerConnections).forEach((connection) => {
+                const track = connection
+                    .getSenders()
+                    .find((sender) => sender.track.id === this.state.audio_track_id)
+                connection.removeTrack(track)
             })
-
-            return this.setState({ isSharingAudio: false, errorMessage: '' }, () => {
+            return this.setState({ audio_track_id: null, errorMessage: '' }, () => {
                 this.emitUpdateSharing()
             })
         }
 
         // toggling ON
         else {
-            this.setState({ isSharingAudio: true, errorMessage: '' }, async () => {
-                const mediaDevices = window && window.navigator && window.navigator.mediaDevices
-                if (!mediaDevices) {
-                    return this.setState({
-                        isSharingAudio: false,
-                        errorMessage: 'Cannot find media devices to stream audio.',
-                    })
-                }
+            const mediaDevices = window && window.navigator && window.navigator.mediaDevices
+            if (!mediaDevices) {
+                return this.setState({
+                    audio_track_id: null,
+                    errorMessage: 'Cannot find media devices to stream audio.',
+                })
+            }
 
-                try {
-                    const stream = await mediaDevices.getUserMedia(this.getUserMediaConstraints())
-                    this.ownVideo.current.srcObject = stream
-                    this.ownVideo.current.play()
+            try {
+                const stream = await mediaDevices.getUserMedia({
+                    audio: true,
+                    video: !!this.state.video_track_id,
+                })
+                const audioTrack = stream.getAudioTracks()[0]
+                Object.values(this.state.peerConnections).forEach((connection) => {
+                    connection.addTrack(audioTrack)
+                })
+                this.setState({ audio_track_id: audioTrack.id }, () => {
                     this.emitUpdateSharing()
-                } catch (e) {
-                    let errorMessage = e.message
-                    if (e instanceof DOMException && errorMessage === 'Permission denied') {
-                        errorMessage =
-                            'Permission denied to use audio media. Please allow this site to use your media. If using Google Chrome, click on Menu -> Settings -> Privacy and Security -> Site Settings'
-                    }
-
-                    return this.setState({
-                        isSharingAudio: false,
-                        errorMessage,
-                    })
+                })
+            } catch (e) {
+                let errorMessage = e.message
+                if (e instanceof DOMException && errorMessage === 'Permission denied') {
+                    errorMessage =
+                        'Permission denied to use audio media. Please allow this site to use your media. If using Google Chrome, click on Menu -> Settings -> Privacy and Security -> Site Settings'
                 }
-            })
+
+                return this.setState({
+                    audio_track_id: null,
+                    errorMessage,
+                })
+            }
         }
     }
 
-    handleClickShareScreen = () => {}
+    handleClickShareScreen = async () => {
+        // remove focus so that user doesn't accidently hit ENTER to re-toggle it
+        document.getElementById('share-button').blur()
 
-    getUserMediaConstraints = () => ({
-        video: this.state.isSharingVideo,
-        audio: this.state.isSharingAudio,
-    })
+        // if it is currently playing, toggle it OFF
+        if (this.state.screen_track_id) {
+            Object.values(this.state.peerConnections).forEach((connection) => {
+                const track = connection
+                    .getSenders()
+                    .find((sender) => sender.track.id === this.state.screen_track_id)
+                connection.removeTrack(track)
+            })
+            return this.setState({ screen_track_id: null, errorMessage: '' }, () => {
+                this.emitUpdateSharing()
+            })
+        }
+
+        // toggling ON
+        else {
+            const mediaDevices = window && window.navigator && window.navigator.mediaDevices
+            if (!mediaDevices) {
+                return this.setState({
+                    screen_track_id: null,
+                    errorMessage: 'Cannot find media devices to stream screen.',
+                })
+            }
+
+            try {
+                const stream = await mediaDevices.getDisplayMedia({
+                    video: { cursor: 'always' },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100,
+                    },
+                })
+                let videoTrack = stream.getVideoTracks()[0]
+                let audioTrack = stream.getAudioTracks()[0]
+                Object.values(this.state.peerConnections).forEach((connection) => {
+                    if (videoTrack) {
+                        connection.addTrack(videoTrack)
+                    }
+                    if (audioTrack) {
+                        connection.addTrack(audioTrack)
+                    }
+                })
+                this.setState(
+                    {
+                        screen_audio_track_id: audioTrack ? audioTrack.id : null,
+                        screen_video_track_id: videoTrack ? videoTrack.id : null,
+                    },
+                    () => {
+                        this.emitUpdateSharing()
+                    }
+                )
+            } catch (e) {
+                let errorMessage = e.message
+                if (e instanceof DOMException && errorMessage === 'Permission denied') {
+                    errorMessage =
+                        'Permission denied to share screen. Please allow this site to use your media. If using Google Chrome, click on Menu -> Settings -> Privacy and Security -> Site Settings'
+                }
+
+                return this.setState({
+                    screen_audio_track_id: null,
+                    screen_video_track_id: null,
+                    errorMessage,
+                })
+            }
+        }
+    }
 
     getRTCConfig = () => ({
         iceServers: [
@@ -231,9 +336,9 @@ export default class VideoMain extends React.Component {
 
     render() {
         const {
-            isSharingAudio,
-            isSharingVideo,
-            isSharingScreen,
+            audio_track_id,
+            video_track_id,
+            screen_video_track_id,
             errorMessage,
             peerConnections,
         } = this.state
@@ -249,11 +354,17 @@ export default class VideoMain extends React.Component {
                 <OwnVideo ref={this.ownVideo} />
                 {errorMessage && <p>{errorMessage}</p>}
                 <div className={style.buttonContainer}>
-                    <AudioButton handleClick={this.handleClickAudio} isStreaming={isSharingAudio} />
-                    <VideoButton handleClick={this.handleClickVideo} isStreaming={isSharingVideo} />
+                    <AudioButton
+                        handleClick={this.handleClickAudio}
+                        isStreaming={!!audio_track_id}
+                    />
+                    <VideoButton
+                        handleClick={this.handleClickVideo}
+                        isStreaming={!!video_track_id}
+                    />
                     <ShareButton
                         handleClick={this.handleClickShareScreen}
-                        isStreaming={isSharingScreen}
+                        isStreaming={!!screen_video_track_id}
                     />
                 </div>
             </div>

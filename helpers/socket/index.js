@@ -121,12 +121,9 @@ async function handleWatcherJoin(socket, io, roomId, requestingSocketId) {
         }
         const room_pk = roomData[0].id
         let allClientsInRoom = await _getAllClientsInRoom(room_pk)
-        allClientsSharing = allClientsInRoom.filter(
-            (client) =>
-                client.is_sharing_video || client.is_sharing_audio || client.is_sharing_screen
-        )
+        const allOtherClients = allClientsInRoom.filter((client) => client.socket_id !== socket.id)
 
-        allClientsSharing.forEach((client) => {
+        allOtherClients.forEach((client) => {
             io.to(client.socket_id).emit('watcherRequest', { requestingSocketId })
         })
     } catch (error) {
@@ -134,12 +131,23 @@ async function handleWatcherJoin(socket, io, roomId, requestingSocketId) {
     }
 }
 
-async function handleUpdateSharing(socket, io, props) {
+async function handleUpdateSharing(socket, io, clientData) {
     try {
-        const { client_pk, is_sharing_video, is_sharing_audio, is_sharing_screen } = props
+        const {
+            client_pk,
+            audio_track_id,
+            video_track_id,
+            screen_audio_track_id,
+            screen_video_track_id,
+        } = clientData
         const updatedUser = await knex('clients')
             .where({ id: client_pk })
-            .update({ is_sharing_audio, is_sharing_screen, is_sharing_video })
+            .update({
+                audio_track_id,
+                video_track_id,
+                screen_audio_track_id,
+                screen_video_track_id,
+            })
             .returning('*')
 
         socket.emit('updateSharing', { updatedUser: updatedUser[0] })
@@ -160,6 +168,16 @@ async function handleCandidate(socket, io, sendToSocketId, candidate) {
     io.to(sendToSocketId).emit('candidate', { fromSocketId: socket.id, candidate })
 }
 
+async function handleAddedPeerConnectionTrack(socket, io, trackId, clients) {
+    clients.forEach((clientId) => {
+        io.to(clientId).emit('addedPeerConnectionTrack', { trackId, fromSocketId: socket.id })
+    })
+}
+
+async function handleRenegotiate(socket, io, toSocketId) {
+    // io.to(toSocketId).emit('watcherRequest', { requestingSocketId: socket.id })
+}
+
 module.exports = {
     handleConnect,
     handleJoinRoom,
@@ -169,4 +187,6 @@ module.exports = {
     handleOffer,
     handleAnswer,
     handleCandidate,
+    handleAddedPeerConnectionTrack,
+    handleRenegotiate,
 }

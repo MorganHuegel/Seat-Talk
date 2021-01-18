@@ -25,9 +25,10 @@ CREATE TABLE room_clients(
 CREATE TABLE clients(
   id serial PRIMARY KEY,
   socket_id VARCHAR NOT NULL,
-  is_sharing_audio boolean default FALSE,
-  is_sharing_video boolean default FALSE,
-  is_sharing_screen boolean default FALSE,
+  audio_track_id VARCHAR,
+  video_track_id VARCHAR,
+  screen_video_track_id VARCHAR,
+  screen_audio_track_id VARCHAR,
   joined_at timestamptz default now(),
   disconnected_at timestamptz
 );
