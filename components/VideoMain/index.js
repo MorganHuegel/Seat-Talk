@@ -20,7 +20,7 @@ export default class VideoMain extends React.Component {
     }
 
     componentDidMount() {
-        const { socket, clientDatabaseId, roomId } = this.props
+        const { socket } = this.props
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
             const { audio_track_id, screen_track_id, video_track_id } = this.state
 

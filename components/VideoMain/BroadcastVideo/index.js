@@ -5,23 +5,31 @@ import { PeerConnectionButton } from '../../Buttons'
 const BroadcastVideo = React.forwardRef((props, ref) => {
     let { peerConnections, allClientsInRoom } = props
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
+
+    function setDefaultVideoTrackId() {
+        let defaultConnection = Object.values(peerConnections).find((pc) => {
+            return pc.getReceivers().find((receiver) => receiver.track.kind === 'video')
+        })
+
+        setCurrentVideoTrackId(
+            defaultConnection
+                ? defaultConnection.getReceivers().find((r) => r.track.kind === 'video').track.id
+                : null
+        )
+    }
+
     useEffect(() => {
         if (!currentVideoTrackId) {
-            let defaultConnection = Object.values(peerConnections).find((peerConnection) => {
-                return peerConnection
-                    .getReceivers()
-                    .find((receiver) => receiver.track.kind === 'video')
+            setDefaultVideoTrackId()
+        }
+        // if there is a currentVideoTrackId, check that the update to peerConnections
+        // was not the peer removing the track that this client was watching
+        else {
+            let peerPlayingCurrentVideo = Object.values(peerConnections).find((pc) => {
+                return pc.getReceivers().find((r) => r.track.id === currentVideoTrackId)
             })
-            console.log(
-                'in useEffect',
-                defaultConnection &&
-                    defaultConnection.getReceivers().find((r) => r.track.kind === 'video')
-            )
-
-            if (defaultConnection) {
-                setCurrentVideoTrackId(
-                    defaultConnection.getReceivers().find((r) => r.track.kind === 'video').track.id
-                )
+            if (!peerPlayingCurrentVideo) {
+                setDefaultVideoTrackId()
             }
         }
     }, [peerConnections])
