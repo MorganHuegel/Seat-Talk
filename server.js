@@ -21,7 +21,9 @@ io.on('connect', (socket) => {
     socket.on('joinRoom', ({ roomId, clientDatabaseId }) =>
         handleJoinRoom(socket, io, roomId, clientDatabaseId)
     )
-    socket.on('updateSharing', (props) => handleUpdateSharing(socket, io, props))
+    socket.on('updateSharing', (clientInfo, roomId) =>
+        handleUpdateSharing(socket, io, clientInfo, roomId)
+    )
     socket.on('watcherJoin', ({ roomId, requestingSocketId }) =>
         handleWatcherJoin(socket, io, roomId, requestingSocketId)
     )

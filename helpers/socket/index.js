@@ -131,7 +131,7 @@ async function handleWatcherJoin(socket, io, roomId, requestingSocketId) {
     }
 }
 
-async function handleUpdateSharing(socket, io, clientData) {
+async function handleUpdateSharing(socket, io, clientData, roomId) {
     try {
         const {
             client_pk,
@@ -150,7 +150,9 @@ async function handleUpdateSharing(socket, io, clientData) {
             })
             .returning('*')
 
-        socket.emit('updateSharing', { updatedUser: updatedUser[0] })
+        // socket.emit('updateSharing', { updatedUser: updatedUser[0] })
+        // io.emit('updateSharing', { updatedUser: updatedUser[0] })
+        io.to(roomId).emit('updateSharing', { updatedUser: updatedUser[0] })
     } catch (error) {
         _handleErrors(socket, error, 'handleUpdateSharing')
     }

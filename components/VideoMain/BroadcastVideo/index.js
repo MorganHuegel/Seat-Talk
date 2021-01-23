@@ -5,6 +5,11 @@ import { PeerConnectionButton } from '../../Buttons'
 const BroadcastVideo = React.forwardRef((props, ref) => {
     let { peerConnections, allClientsInRoom } = props
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
+    useEffect(() => {
+        if (ref.current.srcObject) {
+            ref.current.srcObject.getVideoTracks().forEach((track) => track.stop())
+        }
+    }, [currentVideoTrackId])
 
     function setDefaultVideoTrackId() {
         let defaultConnection = Object.values(peerConnections).find((pc) => {
@@ -46,13 +51,14 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
             })
         }
     })
+    console.log('tracks: ', tracks)
     if (tracks.length > 0) {
+        const stream = ref.current.srcObject || new MediaStream()
         tracks.forEach((track) => {
-            const stream = ref.current.srcObject || new MediaStream()
             stream.addTrack(track)
-            ref.current.srcObject = stream
-            ref.current.play()
         })
+        ref.current.srcObject = stream
+        ref.current.play()
     }
     return (
         <div className={style.container}>
@@ -63,44 +69,46 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
                             const clientInfo = allClientsInRoom.find(
                                 (client) => client.socket_id === socketId
                             )
-                            // if (
-                            //     !clientInfo ||
-                            //     (!clientInfo.is_sharing_video && !clientInfo.is_sharing_screen)
-                            // ) {
-                            //     return null
-                            // }
+                            const { video_track_id, screen_video_track_id } = clientInfo
                             const displayName = clientInfo.socket_id
 
                             let receivers =
                                 peerConnections[socketId] &&
                                 peerConnections[socketId].getReceivers()
-                            // console.log('receivers', receivers)
-                            let thisReceiver = receivers.find(
-                                (receiver) => receiver.track.kind === 'video'
-                            )
-                            let videoTrackId =
-                                thisReceiver && thisReceiver.track && thisReceiver.track.id
+                            let isVideoTrackAvailable =
+                                video_track_id &&
+                                receivers.find(
+                                    (r) => r.track.kind === 'video' && r.track.id === video_track_id
+                                )
+
+                            let isScreenTrackAvailable =
+                                screen_video_track_id &&
+                                receivers.find(
+                                    (r) =>
+                                        r.track.kind === 'video' &&
+                                        r.track.id === screen_video_track_id
+                                )
 
                             return (
                                 <React.Fragment key={socketId}>
-                                    {true && (
+                                    {isVideoTrackAvailable && (
                                         <PeerConnectionButton
                                             text={displayName + "'s Video"}
                                             onClick={(e) => {
-                                                setCurrentVideoTrackId(videoTrackId)
+                                                setCurrentVideoTrackId(video_track_id)
                                                 e.currentTarget.blur()
                                             }}
-                                            isActive={videoTrackId === currentVideoTrackId}
+                                            isActive={video_track_id === currentVideoTrackId}
                                         />
                                     )}
-                                    {clientInfo.is_sharing_screen && (
+                                    {isScreenTrackAvailable && (
                                         <PeerConnectionButton
                                             text={displayName + "'s Screen"}
                                             onClick={(e) => {
-                                                setCurrentVideoTrackId(videoTrackId)
+                                                setCurrentVideoTrackId(screen_video_track_id)
                                                 e.currentTarget.blur()
                                             }}
-                                            isActive={videoTrackId === currentVideoTrackId}
+                                            isActive={screen_video_track_id === currentVideoTrackId}
                                         />
                                     )}
                                 </React.Fragment>

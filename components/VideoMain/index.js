@@ -131,13 +131,17 @@ export default class VideoMain extends React.Component {
     }
 
     emitUpdateSharing = () => {
-        this.props.socket.emit('updateSharing', {
-            client_pk: this.props.clientDatabaseId,
-            audio_track_id: this.state.audio_track_id,
-            video_track_id: this.state.video_track_id,
-            screen_audio_track_id: this.state.screen_audio_track_id,
-            screen_video_track_id: this.state.screen_video_track_id,
-        })
+        this.props.socket.emit(
+            'updateSharing',
+            {
+                client_pk: this.props.clientDatabaseId,
+                audio_track_id: this.state.audio_track_id,
+                video_track_id: this.state.video_track_id,
+                screen_audio_track_id: this.state.screen_audio_track_id,
+                screen_video_track_id: this.state.screen_video_track_id,
+            },
+            this.props.roomId
+        )
     }
 
     handleClickVideo = async () => {
