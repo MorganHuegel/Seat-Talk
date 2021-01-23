@@ -21,114 +21,85 @@ export default class VideoMain extends React.Component {
 
     componentDidMount() {
         const { socket } = this.props
+
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
-            const { audio_track_id, screen_track_id, video_track_id } = this.state
+            console.log('received watcher request')
+            if (this.state.peerConnections[requestingSocketId]) {
+                console.error(
+                    'watcherRequest event was fired between two already-existing peer connections.'
+                )
+            }
 
             let peerConnection =
                 this.state.peerConnections[requestingSocketId] ||
-                new RTCPeerConnection(this.getRTCConfig())
-            peerConnection.addEventListener('iceconnectionstatechange', (event) => {
-                if (peerConnection.iceConnectionState === 'failed') {
-                    peerConnection.restartIce()
-                }
-            })
-            peerConnection.onnegotiationneeded = async (event) => {
-                console.log('onnegotiationneeded first')
-                const offer = await peerConnection.createOffer()
-                await peerConnection.setLocalDescription(offer)
-                socket.emit('offer', { offer, sendToSocketId: requestingSocketId })
-            }
-
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('candidate', {
-                        sendToSocketId: requestingSocketId,
-                        candidate: event.candidate,
-                    })
-                }
-            }
-
-            const mediaDevices = window && window.navigator && window.navigator.mediaDevices
-            if (audio_track_id || video_track_id) {
-                const userStream = await mediaDevices.getUserMedia(this.getUserMediaConstraints())
-                userStream.getTracks().forEach((track) => {
-                    peerConnection.addTrack(track, userStream)
-                })
-            }
-            if (screen_track_id) {
-                const displayStream = await mediaDevices.getDisplayMedia(
-                    this.getDisplayMediaConstraints()
-                )
-                displayStream.getTracks().forEach((track) => {
-                    peerConnection.addTrack(track, displayStream)
-                })
-            }
+                (await this.createPeerConnection(requestingSocketId))
 
             const offer = await peerConnection.createOffer()
             await peerConnection.setLocalDescription(offer)
+            socket.emit('offer', { offer, sendToSocketId: requestingSocketId })
 
-            let peerConnections = { ...this.state.peerConnections }
-            peerConnections[requestingSocketId] = peerConnection
-            this.setState({ peerConnections }, () => {
-                socket.emit('offer', { offer, sendToSocketId: requestingSocketId })
+            this.setState({
+                peerConnections: Object.assign({}, this.state.peerConnections, {
+                    [requestingSocketId]: peerConnection,
+                }),
             })
         })
+
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
-            const peerConnection =
+            console.log('received offer')
+            if (this.state.peerConnections[sentFromSocketId]) {
+                console.error(
+                    'offer event was fired between two already-existing peer connections.'
+                )
+            }
+
+            let peerConnection =
                 this.state.peerConnections[sentFromSocketId] ||
-                new RTCPeerConnection(this.getRTCConfig())
-            await peerConnection.setRemoteDescription(offer)
+                (await this.createPeerConnection(sentFromSocketId))
+
+            let remoteDescription = new RTCSessionDescription(offer)
+            await peerConnection.setRemoteDescription(remoteDescription)
             const sdpAnswer = await peerConnection.createAnswer()
             await peerConnection.setLocalDescription(sdpAnswer)
-            peerConnection.addEventListener('iceconnectionstatechange', (event) => {
-                if (peerConnection.iceConnectionState === 'failed') {
-                    peerConnection.restartIce()
-                }
+            socket.emit('answer', {
+                localDescription: peerConnection.localDescription,
+                sendToSocketId: sentFromSocketId,
             })
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('candidate', {
-                        sendToSocketId: sentFromSocketId,
-                        candidate: event.candidate,
-                    })
-                }
-            }
-            peerConnection.onnegotiationneeded = (event) => {
-                console.log('onnegotiationneeded second', event)
-            }
+            // udpate state so broadcast video re-renders
+            this.setState({
+                peerConnections: Object.assign({}, this.state.peerConnections, {
+                    [sentFromSocketId]: peerConnection,
+                }),
+            })
+        })
 
-            peerConnection.ontrack = (event) => {
-                console.log('ontrack', event)
-                this.setState({ peerConnections: { ...this.state.peerConnections } })
-                // if (!this.broadcastVideo.current.srcObject) {
-                // this.broadcastVideo.current.srcObject = new MediaStream()
-                // }
-                // this.broadcastVideo.current.srcObject.addTrack(event.receiver.track)
-                // this.broadcastVideo.current.play()
-                // this.broadcastVideo.current.srcObject = event.receiver.track
-                // this.broadcastVideo.play()
-            }
-            let peerConnections = { ...this.state.peerConnections }
-            peerConnections[sentFromSocketId] = peerConnection
-            this.setState({ peerConnections }, () => {
-                socket.emit('answer', {
-                    localDescription: peerConnection.localDescription,
-                    sendToSocketId: sentFromSocketId,
-                })
+        socket.on('answer', async ({ localDescription, sentFromSocketId }) => {
+            console.log('received answer')
+            const peerConnection = this.state.peerConnections[sentFromSocketId]
+            let remoteDescription = new RTCSessionDescription(localDescription)
+            await peerConnection.setRemoteDescription(remoteDescription)
+            this.setState({
+                peerConnections: Object.assign({}, this.state.peerConnections, {
+                    [sentFromSocketId]: peerConnection,
+                }),
             })
         })
-        socket.on('answer', async ({ localDescription, sentFromSocketId }) => {
-            let peerConnections = { ...this.state.peerConnections }
-            await peerConnections[sentFromSocketId].setRemoteDescription(localDescription)
-            this.setState({ peerConnections })
-        })
+
         socket.on('candidate', async ({ candidate, fromSocketId }) => {
+            console.log('received candidate event')
             try {
+                const peerConnection = this.state.peerConnections[fromSocketId]
                 let iceCandidate = new RTCIceCandidate(candidate)
-                let peerConnections = { ...this.state.peerConnections }
-                await peerConnections[fromSocketId].addIceCandidate(iceCandidate)
+                await peerConnection.addIceCandidate(iceCandidate)
+                // force broadcast video re-render with udpated connection info
+                this.setState({
+                    peerConnections: Object.assign({}, this.state.peerConnections, {
+                        [fromSocketId]: peerConnection,
+                    }),
+                })
             } catch (e) {
                 // will call restartIce() in iceconnectionstatechange
+                console.error('caught error adding ICE candidate', e)
             }
         })
 
@@ -136,7 +107,43 @@ export default class VideoMain extends React.Component {
          * WebRTC Resources:
          *  https://gabrieltanner.org/blog/webrtc-video-broadcast
          *  https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Connectivity
+         *  https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling
          */
+    }
+
+    createPeerConnection = async (peerSocketId) => {
+        const { socket } = this.props
+
+        let peerConnection = new RTCPeerConnection(this.getRTCConfig())
+        peerConnection.onicecandidate = (event) => {
+            console.log('onicecandidate')
+            if (event.candidate) {
+                socket.emit('candidate', {
+                    sendToSocketId: peerSocketId,
+                    candidate: event.candidate,
+                })
+            }
+        }
+        peerConnection.oniceconnectionstatechange = (event) => {
+            console.log('oniceconnectionstatechange')
+            if (peerConnection.iceConnectionState === 'failed') {
+                peerConnection.restartIce()
+            }
+        }
+        peerConnection.onnegotiationneeded = async (event) => {
+            console.log('onnegotiationneeded')
+            const offer = await peerConnection.createOffer()
+            await peerConnection.setLocalDescription(offer)
+            socket.emit('offer', { offer, sendToSocketId: peerSocketId })
+        }
+        peerConnection.onTrack = (event) => {
+            console.log('onTrack fired', event)
+        }
+        peerConnection.onRemoveTrack = (event) => {
+            console.log('onRemoveTrack fired!', event)
+        }
+
+        return peerConnection
     }
 
     emitUpdateSharing = () => {
@@ -167,7 +174,9 @@ export default class VideoMain extends React.Component {
                 const track = connection
                     .getSenders()
                     .find((sender) => sender.track.id === this.state.video_track_id)
-                connection.removeTrack(track)
+                if (track) {
+                    connection.removeTrack(track)
+                }
             })
             return this.setState({ video_track_id: null, errorMessage: '' }, () => {
                 this.emitUpdateSharing()
@@ -189,12 +198,12 @@ export default class VideoMain extends React.Component {
                     video: true,
                     audio: !!this.state.audio_track_id,
                 })
-                const videoTrack = stream.getVideoTracks()[0]
                 this.ownVideo.current.srcObject = stream
+                const videoTrack = stream.getVideoTracks()[0]
                 await this.ownVideo.current.play()
                 Object.values(this.state.peerConnections).forEach((connection) => {
-                    console.log('connection', connection)
-                    connection.addTrack(videoTrack)
+                    console.log('adding video to connection', connection)
+                    connection.addTrack(videoTrack, stream)
                 })
                 this.setState({ video_track_id: videoTrack.id }, () => {
                     this.emitUpdateSharing()
@@ -244,8 +253,8 @@ export default class VideoMain extends React.Component {
 
             try {
                 const stream = await mediaDevices.getUserMedia({
-                    audio: true,
                     video: !!this.state.video_track_id,
+                    audio: true,
                 })
                 const audioTrack = stream.getAudioTracks()[0]
                 Object.values(this.state.peerConnections).forEach((connection) => {

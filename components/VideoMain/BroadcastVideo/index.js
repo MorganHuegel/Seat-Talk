@@ -5,66 +5,77 @@ import { PeerConnectionButton } from '../../Buttons'
 const BroadcastVideo = React.forwardRef((props, ref) => {
     let { peerConnections, allClientsInRoom } = props
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
+
     useEffect(() => {
         if (ref.current.srcObject) {
             ref.current.srcObject.getVideoTracks().forEach((track) => track.stop())
         }
     }, [currentVideoTrackId])
 
-    function setDefaultVideoTrackId() {
-        let defaultConnection = Object.values(peerConnections).find((pc) => {
-            return pc.getReceivers().find((receiver) => receiver.track.kind === 'video')
-        })
+    // function setDefaultVideoTrackId() {
+    //     let defaultConnection = Object.values(peerConnections).find((pc) => {
+    //         return pc.getReceivers().find((receiver) => receiver.track.kind === 'video')
+    //     })
 
-        setCurrentVideoTrackId(
-            defaultConnection
-                ? defaultConnection.getReceivers().find((r) => r.track.kind === 'video').track.id
-                : null
-        )
-    }
+    //     setCurrentVideoTrackId(
+    //         defaultConnection
+    //             ? defaultConnection.getReceivers().find((r) => r.track.kind === 'video').track.id
+    //             : null
+    //     )
+    // }
 
-    useEffect(() => {
-        if (!currentVideoTrackId) {
-            setDefaultVideoTrackId()
-        }
-        // if there is a currentVideoTrackId, check that the update to peerConnections
-        // was not the peer removing the track that this client was watching
-        else {
-            let peerPlayingCurrentVideo = Object.values(peerConnections).find((pc) => {
-                return pc.getReceivers().find((r) => r.track.id === currentVideoTrackId)
-            })
-            if (!peerPlayingCurrentVideo) {
-                setDefaultVideoTrackId()
-            }
-        }
-    }, [peerConnections])
+    // useEffect(() => {
+    //     if (!currentVideoTrackId) {
+    //         setDefaultVideoTrackId()
+    //     }
+    //     // if there is a currentVideoTrackId, check that the update to peerConnections
+    //     // was not the peer removing the track that this client was watching
+    //     else {
+    //         let peerPlayingCurrentVideo = Object.values(peerConnections).find((pc) => {
+    //             return pc.getReceivers().find((r) => r.track.id === currentVideoTrackId)
+    //         })
+    //         if (!peerPlayingCurrentVideo) {
+    //             setDefaultVideoTrackId()
+    //         }
+    //     }
+    // }, [peerConnections])
 
     let tracks = []
-    // Push all audio tracks, but only show one video at a time based on currentView
-    Object.values(peerConnections).forEach((connection) => {
-        const receivers = connection.getReceivers()
-        console.log('receivers: ', receivers)
-        if (receivers.length > 0) {
-            receivers.forEach((receiver) => {
-                if (receiver.track.kind === 'audio' || receiver.track.id === currentVideoTrackId) {
-                    tracks.push(receiver.track)
+    if (peerConnections && Object.keys(peerConnections).length) {
+        // Push all audio tracks, but only show one video at a time based on currentVideoTrackId
+        Object.values(peerConnections).forEach((connection) => {
+            if (connection instanceof Promise) {
+                // still negotiating the offer-answer sequence
+            } else {
+                const receivers = connection
+                    .getReceivers()
+                    .filter((r) => r.track.readyState === 'live')
+                console.log('receivers: ', receivers)
+                if (receivers.length > 0) {
+                    receivers.forEach((receiver) => {
+                        if (
+                            receiver.track.kind === 'audio' ||
+                            receiver.track.id === currentVideoTrackId
+                        ) {
+                            tracks.push(receiver.track)
+                        }
+                    })
                 }
-            })
-        }
-    })
+            }
+        })
 
-    async function addTracks() {
-        if (tracks.length > 0) {
-            const stream = ref.current.srcObject || new MediaStream()
-            tracks.forEach((track) => {
-                stream.addTrack(track)
-            })
-            ref.current.srcObject = stream
-            let x = await ref.current.play()
-            console.log('play response', x)
+        async function addTracks() {
+            if (tracks.length > 0) {
+                const stream = ref.current.srcObject || new MediaStream()
+                tracks.forEach((track) => {
+                    stream.addTrack(track)
+                })
+                ref.current.srcObject = stream
+                await ref.current.play()
+            }
         }
+        addTracks()
     }
-    addTracks()
 
     return (
         <div className={style.container}>
@@ -72,9 +83,17 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
                 <div className={style.buttonContainer}>
                     {Object.keys(peerConnections)
                         .map((socketId) => {
+                            if (peerConnections[socketId] instanceof Promise) {
+                                // still negotiating offer-answer sequence
+                                return null
+                            }
                             const clientInfo = allClientsInRoom.find(
                                 (client) => client.socket_id === socketId
                             )
+                            if (!clientInfo) {
+                                // peer is probably disconnecting
+                                return null
+                            }
                             const { video_track_id, screen_video_track_id } = clientInfo
                             const displayName = clientInfo.socket_id
 
