@@ -43,6 +43,7 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
     // Push all audio tracks, but only show one video at a time based on currentView
     Object.values(peerConnections).forEach((connection) => {
         const receivers = connection.getReceivers()
+        console.log('receivers: ', receivers)
         if (receivers.length > 0) {
             receivers.forEach((receiver) => {
                 if (receiver.track.kind === 'audio' || receiver.track.id === currentVideoTrackId) {
@@ -51,15 +52,20 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
             })
         }
     })
-    console.log('tracks: ', tracks)
-    if (tracks.length > 0) {
-        const stream = ref.current.srcObject || new MediaStream()
-        tracks.forEach((track) => {
-            stream.addTrack(track)
-        })
-        ref.current.srcObject = stream
-        ref.current.play()
+
+    async function addTracks() {
+        if (tracks.length > 0) {
+            const stream = ref.current.srcObject || new MediaStream()
+            tracks.forEach((track) => {
+                stream.addTrack(track)
+            })
+            ref.current.srcObject = stream
+            let x = await ref.current.play()
+            console.log('play response', x)
+        }
     }
+    addTracks()
+
     return (
         <div className={style.container}>
             <div className={style.connectionOptions}>

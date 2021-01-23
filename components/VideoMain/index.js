@@ -24,7 +24,9 @@ export default class VideoMain extends React.Component {
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
             const { audio_track_id, screen_track_id, video_track_id } = this.state
 
-            let peerConnection = new RTCPeerConnection(this.getRTCConfig())
+            let peerConnection =
+                this.state.peerConnections[requestingSocketId] ||
+                new RTCPeerConnection(this.getRTCConfig())
             peerConnection.addEventListener('iceconnectionstatechange', (event) => {
                 if (peerConnection.iceConnectionState === 'failed') {
                     peerConnection.restartIce()
@@ -72,7 +74,9 @@ export default class VideoMain extends React.Component {
             })
         })
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
-            const peerConnection = new RTCPeerConnection(this.getRTCConfig())
+            const peerConnection =
+                this.state.peerConnections[sentFromSocketId] ||
+                new RTCPeerConnection(this.getRTCConfig())
             await peerConnection.setRemoteDescription(offer)
             const sdpAnswer = await peerConnection.createAnswer()
             await peerConnection.setLocalDescription(sdpAnswer)
@@ -95,8 +99,13 @@ export default class VideoMain extends React.Component {
 
             peerConnection.ontrack = (event) => {
                 console.log('ontrack', event)
-                // this.setState({ peerConnections: { ...this.state.peerConnections } })
-                // this.broadcastVideo.current.srcObject = event.streams[0]
+                this.setState({ peerConnections: { ...this.state.peerConnections } })
+                // if (!this.broadcastVideo.current.srcObject) {
+                // this.broadcastVideo.current.srcObject = new MediaStream()
+                // }
+                // this.broadcastVideo.current.srcObject.addTrack(event.receiver.track)
+                // this.broadcastVideo.current.play()
+                // this.broadcastVideo.current.srcObject = event.receiver.track
                 // this.broadcastVideo.play()
             }
             let peerConnections = { ...this.state.peerConnections }
@@ -182,8 +191,9 @@ export default class VideoMain extends React.Component {
                 })
                 const videoTrack = stream.getVideoTracks()[0]
                 this.ownVideo.current.srcObject = stream
-                this.ownVideo.current.play()
+                await this.ownVideo.current.play()
                 Object.values(this.state.peerConnections).forEach((connection) => {
+                    console.log('connection', connection)
                     connection.addTrack(videoTrack)
                 })
                 this.setState({ video_track_id: videoTrack.id }, () => {
