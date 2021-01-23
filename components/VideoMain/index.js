@@ -1,6 +1,6 @@
 import React from 'react'
 import style from '../../styles/Components/VideoMain/VideoMain.module.css'
-import { AudioButton, VideoButton, ShareButton } from '../Buttons'
+import { AudioButton, VideoButton, ShareButton, PeerConnectionButton } from '../Buttons'
 import OwnVideo from './OwnVideo'
 import BroadcastVideo from './BroadcastVideo'
 
@@ -12,17 +12,21 @@ export default class VideoMain extends React.Component {
             video_track_id: null,
             screen_audio_track_id: null,
             screen_video_track_id: null,
-            peerConnections: {},
             errorMessage: '',
         }
         this.broadcastVideo = React.createRef()
         this.ownVideo = React.createRef()
+        this.peerConnections = {}
     }
 
     componentDidMount() {
         const { socket } = this.props
 
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
+            ////////////////////////////////////
+            return //// handle this in onClickVideo
+            ////////////////////////////////////
+
             console.log('received watcher request')
             if (this.state.peerConnections[requestingSocketId]) {
                 console.error(
@@ -47,14 +51,14 @@ export default class VideoMain extends React.Component {
 
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
             console.log('received offer')
-            if (this.state.peerConnections[sentFromSocketId]) {
+            if (this.peerConnections[sentFromSocketId]) {
                 console.error(
                     'offer event was fired between two already-existing peer connections.'
                 )
             }
 
             let peerConnection =
-                this.state.peerConnections[sentFromSocketId] ||
+                this.peerConnections[sentFromSocketId] ||
                 (await this.createPeerConnection(sentFromSocketId))
 
             let remoteDescription = new RTCSessionDescription(offer)
@@ -65,38 +69,23 @@ export default class VideoMain extends React.Component {
                 localDescription: peerConnection.localDescription,
                 sendToSocketId: sentFromSocketId,
             })
-            // udpate state so broadcast video re-renders
-            this.setState({
-                peerConnections: Object.assign({}, this.state.peerConnections, {
-                    [sentFromSocketId]: peerConnection,
-                }),
-            })
         })
 
         socket.on('answer', async ({ localDescription, sentFromSocketId }) => {
             console.log('received answer')
-            const peerConnection = this.state.peerConnections[sentFromSocketId]
+            const peerConnection = this.peerConnections[sentFromSocketId]
             let remoteDescription = new RTCSessionDescription(localDescription)
             await peerConnection.setRemoteDescription(remoteDescription)
-            this.setState({
-                peerConnections: Object.assign({}, this.state.peerConnections, {
-                    [sentFromSocketId]: peerConnection,
-                }),
-            })
         })
 
         socket.on('candidate', async ({ candidate, fromSocketId }) => {
             console.log('received candidate event')
             try {
-                const peerConnection = this.state.peerConnections[fromSocketId]
-                let iceCandidate = new RTCIceCandidate(candidate)
-                await peerConnection.addIceCandidate(iceCandidate)
-                // force broadcast video re-render with udpated connection info
-                this.setState({
-                    peerConnections: Object.assign({}, this.state.peerConnections, {
-                        [fromSocketId]: peerConnection,
-                    }),
-                })
+                const peerConnection = this.peerConnections[fromSocketId]
+                if (peerConnection) {
+                    let iceCandidate = new RTCIceCandidate(candidate)
+                    await peerConnection.addIceCandidate(iceCandidate)
+                }
             } catch (e) {
                 // will call restartIce() in iceconnectionstatechange
                 console.error('caught error adding ICE candidate', e)
@@ -132,18 +121,24 @@ export default class VideoMain extends React.Component {
         }
         peerConnection.onnegotiationneeded = async (event) => {
             console.log('onnegotiationneeded')
-            const offer = await peerConnection.createOffer()
-            await peerConnection.setLocalDescription(offer)
-            socket.emit('offer', { offer, sendToSocketId: peerSocketId })
+            this.sendNegotiationOffer(peerConnection, peerSocketId)
         }
-        peerConnection.onTrack = (event) => {
+        peerConnection.ontrack = async (event) => {
             console.log('onTrack fired', event)
+            this.broadcastVideo.current.srcObject = event.streams[0]
+            await this.broadcastVideo.current.play()
         }
-        peerConnection.onRemoveTrack = (event) => {
+        peerConnection.onremovetrack = (event) => {
             console.log('onRemoveTrack fired!', event)
         }
 
         return peerConnection
+    }
+
+    sendNegotiationOffer = async (peerConnection, peerSocketId) => {
+        const offer = await peerConnection.createOffer()
+        await peerConnection.setLocalDescription(offer)
+        this.props.socket.emit('offer', { offer, sendToSocketId: peerSocketId })
     }
 
     emitUpdateSharing = () => {
@@ -185,6 +180,14 @@ export default class VideoMain extends React.Component {
 
         // toggling ON
         else {
+            // Step 1 - Create RTCPeerConnections (if not there yet)
+            this.props.allClientsInRoom.forEach(async (c) => {
+                if (!this.peerConnections[c.socket_id] && c.socket_id !== this.props.socket.id) {
+                    this.peerConnections[c.socket_id] = await this.createPeerConnection(c.socket_id)
+                }
+            })
+
+            // Step 2 - Add video to local srcObject
             const mediaDevices = window && window.navigator && window.navigator.mediaDevices
             if (!mediaDevices) {
                 return this.setState({
@@ -192,19 +195,25 @@ export default class VideoMain extends React.Component {
                     errorMessage: 'Cannot find media devices to stream video.',
                 })
             }
-
             try {
-                const stream = await mediaDevices.getUserMedia({
+                const localStream = await mediaDevices.getUserMedia({
                     video: true,
                     audio: !!this.state.audio_track_id,
                 })
-                this.ownVideo.current.srcObject = stream
-                const videoTrack = stream.getVideoTracks()[0]
+                this.ownVideo.current.srcObject = localStream
                 await this.ownVideo.current.play()
-                Object.values(this.state.peerConnections).forEach((connection) => {
-                    console.log('adding video to connection', connection)
-                    connection.addTrack(videoTrack, stream)
+                const localTracks = localStream.getTracks()
+
+                // Step 3 - add each track to each peer connection
+                Object.keys(this.peerConnections).forEach((socket_id) => {
+                    const pc = this.peerConnections[socket_id]
+                    localTracks.forEach((track) => {
+                        console.log('pc', pc)
+                        pc.addTrack(track, localStream)
+                    })
                 })
+
+                // step 4 - update allClientsInRoom state
                 this.setState({ video_track_id: videoTrack.id }, () => {
                     this.emitUpdateSharing()
                 })
@@ -358,20 +367,14 @@ export default class VideoMain extends React.Component {
     })
 
     render() {
-        const {
-            audio_track_id,
-            video_track_id,
-            screen_video_track_id,
-            errorMessage,
-            peerConnections,
-        } = this.state
+        const { audio_track_id, video_track_id, screen_video_track_id, errorMessage } = this.state
         const { allClientsInRoom } = this.props
 
         return (
             <div>
                 <BroadcastVideo
                     ref={this.broadcastVideo}
-                    peerConnections={peerConnections}
+                    peerConnections={this.peerConnections}
                     allClientsInRoom={allClientsInRoom}
                 />
                 <OwnVideo ref={this.ownVideo} />
