@@ -52,9 +52,15 @@ export default class VideoMain extends React.Component {
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
             console.log('received offer')
             if (this.peerConnections[sentFromSocketId]) {
-                console.error(
-                    'offer event was fired between two already-existing peer connections.'
-                )
+                // is the new offer because someone stopped streaming a track? check that there are tracks remaining
+                const pc = this.peerConnections[sentFromSocketId]
+                const remainingSenders = pc.getSenders().filter((sender) => sender.track)
+                if (remainingSenders.length === 0) {
+                    this.broadcastVideo.current.srcObject = null
+                } else {
+                    const broadcastMediaStream = this.broadcastVideo.current.srcObject
+                    console.log('handle broadcastMediaStream :/', broadcastMediaStream)
+                }
             }
 
             let peerConnection =
@@ -65,6 +71,9 @@ export default class VideoMain extends React.Component {
             await peerConnection.setRemoteDescription(remoteDescription)
             const sdpAnswer = await peerConnection.createAnswer()
             await peerConnection.setLocalDescription(sdpAnswer)
+
+            this.peerConnections[sentFromSocketId] = peerConnection
+
             socket.emit('answer', {
                 localDescription: peerConnection.localDescription,
                 sendToSocketId: sentFromSocketId,
@@ -129,6 +138,7 @@ export default class VideoMain extends React.Component {
             await this.broadcastVideo.current.play()
         }
         peerConnection.onremovetrack = (event) => {
+            // onremovetrack method coming soon??
             console.log('onRemoveTrack fired!', event)
         }
 
@@ -161,18 +171,20 @@ export default class VideoMain extends React.Component {
 
         // if it is currently playing, toggle it OFF
         if (this.state.video_track_id) {
+            Object.values(this.peerConnections).forEach((pc) => {
+                pc.getSenders().forEach((sender) => {
+                    // some sender instances have already removed tracks (.track is null)
+                    if (sender.track && sender.track.id === this.state.video_track_id) {
+                        pc.removeTrack(sender)
+                    }
+                })
+            })
+
             this.ownVideo.current.srcObject.getVideoTracks().forEach((videoTrack) => {
                 videoTrack.stop()
                 this.ownVideo.current.srcObject.removeTrack(videoTrack)
             })
-            Object.values(this.state.peerConnections).forEach((connection) => {
-                const track = connection
-                    .getSenders()
-                    .find((sender) => sender.track.id === this.state.video_track_id)
-                if (track) {
-                    connection.removeTrack(track)
-                }
-            })
+
             return this.setState({ video_track_id: null, errorMessage: '' }, () => {
                 this.emitUpdateSharing()
             })
@@ -202,12 +214,12 @@ export default class VideoMain extends React.Component {
                 })
                 this.ownVideo.current.srcObject = localStream
                 await this.ownVideo.current.play()
-                const allTracks = localStream.getTracks()
+                const localTracks = localStream.getTracks()
 
                 // Step 3 - add each track to each peer connection
                 Object.keys(this.peerConnections).forEach((socket_id) => {
                     const pc = this.peerConnections[socket_id]
-                    allTracks.forEach((track) => {
+                    localTracks.forEach((track) => {
                         pc.addTrack(track, localStream)
                     })
                 })
