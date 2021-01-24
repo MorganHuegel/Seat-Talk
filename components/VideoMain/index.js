@@ -202,18 +202,18 @@ export default class VideoMain extends React.Component {
                 })
                 this.ownVideo.current.srcObject = localStream
                 await this.ownVideo.current.play()
-                const localTracks = localStream.getTracks()
+                const allTracks = localStream.getTracks()
 
                 // Step 3 - add each track to each peer connection
                 Object.keys(this.peerConnections).forEach((socket_id) => {
                     const pc = this.peerConnections[socket_id]
-                    localTracks.forEach((track) => {
-                        console.log('pc', pc)
+                    allTracks.forEach((track) => {
                         pc.addTrack(track, localStream)
                     })
                 })
 
                 // step 4 - update allClientsInRoom state
+                const videoTrack = localStream.getVideoTracks()[0]
                 this.setState({ video_track_id: videoTrack.id }, () => {
                     this.emitUpdateSharing()
                 })

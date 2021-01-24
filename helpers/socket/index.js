@@ -76,7 +76,6 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId) {
 async function handleDisconnect(socket, io) {
     try {
         const socket_id = socket.id
-        console.log('disconnect error? ', socket_id)
         const clientData = await knex('clients')
             .whereNull('disconnected_at')
             .where({ socket_id })
