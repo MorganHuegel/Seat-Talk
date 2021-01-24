@@ -13,6 +13,7 @@ export default class VideoMain extends React.Component {
             screen_audio_track_id: null,
             screen_video_track_id: null,
             errorMessage: '',
+            availableTracks: [],
         }
         this.broadcastVideo = React.createRef()
         this.ownVideo = React.createRef()
@@ -24,7 +25,7 @@ export default class VideoMain extends React.Component {
 
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
             ////////////////////////////////////
-            return //// handle this in onClickVideo
+            return //// need this later for when user joins after people are sharing
             ////////////////////////////////////
 
             console.log('received watcher request')
@@ -52,24 +53,25 @@ export default class VideoMain extends React.Component {
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
             console.log('received offer')
             if (this.peerConnections[sentFromSocketId]) {
-                // is the new offer because someone stopped streaming a track? check that there are tracks remaining
-                const pc = this.peerConnections[sentFromSocketId]
-                const remainingSenders = pc.getSenders().filter((sender) => sender.track)
-                if (remainingSenders.length === 0) {
-                    this.broadcastVideo.current.srcObject = null
-                } else if (this.broadcastVideo.current.srcObject) {
-                    // if broadcastVideo was playing the removed track, we need to turn it off
-                    const broadcastMediaStream = this.broadcastVideo.current.srcObject
-                    broadcastMediaStream.getTracks().forEach((track) => {
-                        if (
-                            !remainingSenders.some(
-                                (sender) => sender.track && sender.track.id === track.id
-                            )
-                        ) {
-                            this.broadcastVideo.current.srcObject = null
-                        }
-                    })
-                }
+                // is the new offer because someone stopped streaming a track?
+                let allRemainingTracks = []
+                Object.values(this.peerConnections).forEach((pc) => {
+                    const remainingOtherSenders = pc
+                        .getSenders()
+                        .filter(
+                            (sender) =>
+                                sender.track &&
+                                ![
+                                    this.state.audio_track_id,
+                                    this.state.video_track_id,
+                                    this.state.screen_video_track_id,
+                                    this.state.screen_audio_track_id,
+                                ].includes(sender.track.id)
+                        )
+                    remainingOtherSenders.forEach((sender) => allRemainingTracks.push(sender.track))
+                })
+                console.log('allRemainingTracks', allRemainingTracks)
+                this.setState({ availableTracks: allRemainingTracks })
             }
 
             let peerConnection =
@@ -143,8 +145,10 @@ export default class VideoMain extends React.Component {
         }
         peerConnection.ontrack = async (event) => {
             console.log('onTrack fired', event)
-            this.broadcastVideo.current.srcObject = event.streams[0]
-            await this.broadcastVideo.current.play()
+            this.setState({ availableTracks: [...this.state.availableTracks, event.track] })
+            // const stream = event.track
+            // this.broadcastVideo.current.srcObject = event.streams[0]
+            // await this.broadcastVideo.current.play()
         }
         peerConnection.onremovetrack = (event) => {
             // onremovetrack method coming soon??
@@ -388,7 +392,13 @@ export default class VideoMain extends React.Component {
     })
 
     render() {
-        const { audio_track_id, video_track_id, screen_video_track_id, errorMessage } = this.state
+        const {
+            audio_track_id,
+            video_track_id,
+            screen_video_track_id,
+            errorMessage,
+            availableTracks,
+        } = this.state
         const { allClientsInRoom } = this.props
 
         return (
@@ -397,6 +407,7 @@ export default class VideoMain extends React.Component {
                     ref={this.broadcastVideo}
                     peerConnections={this.peerConnections}
                     allClientsInRoom={allClientsInRoom}
+                    availableTracks={availableTracks}
                 />
                 <OwnVideo ref={this.ownVideo} />
                 {errorMessage && <p>{errorMessage}</p>}

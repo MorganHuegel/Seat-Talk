@@ -3,77 +3,45 @@ import style from '../../../styles/Components/VideoMain/BroadcastVideo/Broadcast
 import { PeerConnectionButton } from '../../Buttons'
 
 const BroadcastVideo = React.forwardRef((props, ref) => {
-    let { peerConnections, allClientsInRoom } = props
+    let { peerConnections, allClientsInRoom, availableTracks } = props
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
+    console.log('availableTracks', availableTracks)
 
     useEffect(() => {
-        if (ref.current.srcObject) {
-            ref.current.srcObject.getVideoTracks().forEach((track) => track.stop())
+        // remove tracks that are no longer available
+        if (!availableTracks.length) {
+            ref.current.srcObject = null
         }
-    }, [currentVideoTrackId])
-
-    // function setDefaultVideoTrackId() {
-    //     let defaultConnection = Object.values(peerConnections).find((pc) => {
-    //         return pc.getReceivers().find((receiver) => receiver.track.kind === 'video')
-    //     })
-
-    //     setCurrentVideoTrackId(
-    //         defaultConnection
-    //             ? defaultConnection.getReceivers().find((r) => r.track.kind === 'video').track.id
-    //             : null
-    //     )
-    // }
-
-    // useEffect(() => {
-    //     if (!currentVideoTrackId) {
-    //         setDefaultVideoTrackId()
-    //     }
-    //     // if there is a currentVideoTrackId, check that the update to peerConnections
-    //     // was not the peer removing the track that this client was watching
-    //     else {
-    //         let peerPlayingCurrentVideo = Object.values(peerConnections).find((pc) => {
-    //             return pc.getReceivers().find((r) => r.track.id === currentVideoTrackId)
-    //         })
-    //         if (!peerPlayingCurrentVideo) {
-    //             setDefaultVideoTrackId()
-    //         }
-    //     }
-    // }, [peerConnections])
-
-    let tracks = []
-    if (peerConnections && Object.keys(peerConnections).length) {
-        // Push all audio tracks, but only show one video at a time based on currentVideoTrackId
-        Object.values(peerConnections).forEach((connection) => {
-            if (connection instanceof Promise) {
-                // still negotiating the offer-answer sequence
-            } else {
-                const receivers = connection
-                    .getReceivers()
-                    .filter((r) => r.track.readyState === 'live')
-                console.log('receivers: ', receivers)
-                if (receivers.length > 0) {
-                    receivers.forEach((receiver) => {
-                        if (
-                            receiver.track.kind === 'audio' ||
-                            receiver.track.id === currentVideoTrackId
-                        ) {
-                            tracks.push(receiver.track)
-                        }
-                    })
+        let stream = ref.current.srcObject
+        if (stream) {
+            stream.getTracks().forEach((track) => {
+                if (!availableTracks.some((t) => t.id === track.id)) {
+                    track.stop()
+                    stream.removeTrack(track)
                 }
+            })
+        }
+
+        if (!currentVideoTrackId || !availableTracks.find((t) => t.id === currentVideoTrackId)) {
+            let videoTrack = availableTracks.find((t) => t.kind === 'video')
+            setCurrentVideoTrackId(videoTrack ? videoTrack.id : null)
+        }
+    }, [availableTracks])
+
+    async function addTracks() {
+        const stream = ref.current.srcObject || new MediaStream()
+        availableTracks.forEach((t) => {
+            if (t.kind === 'audio' || t.id === currentVideoTrackId) {
+                stream.addTrack(t)
             }
         })
-
-        async function addTracks() {
-            if (tracks.length > 0) {
-                const stream = ref.current.srcObject || new MediaStream()
-                tracks.forEach((track) => {
-                    stream.addTrack(track)
-                })
-                ref.current.srcObject = stream
-                await ref.current.play()
-            }
+        ref.current.srcObject = stream
+        if (ref.current.paused) {
+            await ref.current.play()
         }
+    }
+
+    if (ref.current && availableTracks.length) {
         addTracks()
     }
 
