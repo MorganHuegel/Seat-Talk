@@ -57,9 +57,18 @@ export default class VideoMain extends React.Component {
                 const remainingSenders = pc.getSenders().filter((sender) => sender.track)
                 if (remainingSenders.length === 0) {
                     this.broadcastVideo.current.srcObject = null
-                } else {
+                } else if (this.broadcastVideo.current.srcObject) {
+                    // if broadcastVideo was playing the removed track, we need to turn it off
                     const broadcastMediaStream = this.broadcastVideo.current.srcObject
-                    console.log('handle broadcastMediaStream :/', broadcastMediaStream)
+                    broadcastMediaStream.getTracks().forEach((track) => {
+                        if (
+                            !remainingSenders.some(
+                                (sender) => sender.track && sender.track.id === track.id
+                            )
+                        ) {
+                            this.broadcastVideo.current.srcObject = null
+                        }
+                    })
                 }
             }
 
