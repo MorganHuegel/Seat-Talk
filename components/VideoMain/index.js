@@ -56,6 +56,7 @@ export default class VideoMain extends React.Component {
                 // is the new offer because someone stopped streaming a track?
                 let allRemainingTracks = []
                 Object.values(this.peerConnections).forEach((pc) => {
+                    console.log('remainingOtherSenders', pc.getSenders())
                     const remainingOtherSenders = pc
                         .getSenders()
                         .filter(
@@ -144,7 +145,7 @@ export default class VideoMain extends React.Component {
             this.sendNegotiationOffer(peerConnection, peerSocketId)
         }
         peerConnection.ontrack = async (event) => {
-            console.log('onTrack fired', event)
+            console.log('onTrack fired')
             this.setState({ availableTracks: [...this.state.availableTracks, event.track] })
             // const stream = event.track
             // this.broadcastVideo.current.srcObject = event.streams[0]
@@ -184,13 +185,36 @@ export default class VideoMain extends React.Component {
 
         // if it is currently playing, toggle it OFF
         if (this.state.video_track_id) {
+            // For some reason, have to re-add audio track after removing video
+            let audioTrack
+            if (this.state.audio_track_id) {
+                const mediaDevices = window && window.navigator && window.navigator.mediaDevices
+                if (!mediaDevices) {
+                    return this.setState({
+                        video_track_id: null,
+                        audio_track_id: null,
+                        errorMessage: 'Cannot find media devices to stream video.',
+                    })
+                }
+                const stream = await mediaDevices.getUserMedia({
+                    video: false,
+                    audio: true,
+                })
+                audioTrack = stream.getAudioTracks()[0]
+            }
+
             Object.values(this.peerConnections).forEach((pc) => {
                 pc.getSenders().forEach((sender) => {
                     // some sender instances have already removed tracks (.track is null)
                     if (sender.track && sender.track.id === this.state.video_track_id) {
+                        sender.track.stop()
                         pc.removeTrack(sender)
                     }
                 })
+                if (audioTrack) {
+                    console.log('audioTrack:', audioTrack)
+                    pc.addTrack(audioTrack)
+                }
             })
 
             this.ownVideo.current.srcObject.getVideoTracks().forEach((videoTrack) => {
@@ -230,8 +254,7 @@ export default class VideoMain extends React.Component {
                 const localTracks = localStream.getTracks()
 
                 // Step 3 - add each track to each peer connection
-                Object.keys(this.peerConnections).forEach((socket_id) => {
-                    const pc = this.peerConnections[socket_id]
+                Object.values(this.peerConnections).forEach((pc) => {
                     localTracks.forEach((track) => {
                         pc.addTrack(track, localStream)
                     })
@@ -239,9 +262,13 @@ export default class VideoMain extends React.Component {
 
                 // step 4 - update allClientsInRoom state
                 const videoTrack = localStream.getVideoTracks()[0]
-                this.setState({ video_track_id: videoTrack.id }, () => {
-                    this.emitUpdateSharing()
-                })
+                const audioTrack = this.state.audio_track_id && localStream.getAudioTracks()[0]
+                this.setState(
+                    { video_track_id: videoTrack.id, audio_track_id: audioTrack && audioTrack.id },
+                    () => {
+                        this.emitUpdateSharing()
+                    }
+                )
             } catch (e) {
                 console.error(e)
                 let errorMessage = e.message
@@ -262,14 +289,20 @@ export default class VideoMain extends React.Component {
         // remove focus so that user doesn't accidently hit ENTER to re-toggle it
         document.getElementById('audio-button').blur()
 
-        // if it is currently playing, toggle it OFF
+        // toggling OFF
         if (this.state.audio_track_id) {
-            Object.values(this.state.peerConnections).forEach((connection) => {
-                const track = connection
-                    .getSenders()
-                    .find((sender) => sender.track.id === this.state.audio_track_id)
-                connection.removeTrack(track)
+            Object.values(this.peerConnections).forEach((pc) => {
+                pc.getSenders().forEach((sender) => {
+                    // some sender instances have already removed tracks (.track is null)
+                    if (sender.track && sender.track.id === this.state.audio_track_id) {
+                        sender.track.stop()
+                        if (!this.state.video_track_id) {
+                            pc.removeTrack(sender)
+                        }
+                    }
+                })
             })
+
             return this.setState({ audio_track_id: null, errorMessage: '' }, () => {
                 this.emitUpdateSharing()
             })
@@ -277,6 +310,14 @@ export default class VideoMain extends React.Component {
 
         // toggling ON
         else {
+            // Step 1 - Create RTCPeerConnections (if not there yet)
+            this.props.allClientsInRoom.forEach(async (c) => {
+                if (!this.peerConnections[c.socket_id] && c.socket_id !== this.props.socket.id) {
+                    this.peerConnections[c.socket_id] = await this.createPeerConnection(c.socket_id)
+                }
+            })
+
+            // Step 2 - Get the auiod stream
             const mediaDevices = window && window.navigator && window.navigator.mediaDevices
             if (!mediaDevices) {
                 return this.setState({
@@ -290,13 +331,22 @@ export default class VideoMain extends React.Component {
                     video: !!this.state.video_track_id,
                     audio: true,
                 })
+
+                // Step 3 - Add all tracks to the feed (video would replace existing video track)
+                const allTracks = stream.getTracks()
+                Object.values(this.peerConnections).forEach((pc) => {
+                    allTracks.forEach((t) => pc.addTrack(t, stream))
+                })
+
+                // Step 4 - Update state and emit the update
                 const audioTrack = stream.getAudioTracks()[0]
-                Object.values(this.state.peerConnections).forEach((connection) => {
-                    connection.addTrack(audioTrack)
-                })
-                this.setState({ audio_track_id: audioTrack.id }, () => {
-                    this.emitUpdateSharing()
-                })
+                const videoTrack = this.state.video_track_id && stream.getVideoTracks()[0]
+                this.setState(
+                    { audio_track_id: audioTrack.id, video_track_id: videoTrack && videoTrack.id },
+                    () => {
+                        this.emitUpdateSharing()
+                    }
+                )
             } catch (e) {
                 let errorMessage = e.message
                 if (e instanceof DOMException && errorMessage === 'Permission denied') {
