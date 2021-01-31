@@ -24,30 +24,44 @@ export default class VideoMain extends React.Component {
         const { socket } = this.props
 
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
-            ////////////////////////////////////
-            return //// need this later for when user joins after people are sharing
-            ////////////////////////////////////
-
             console.log('received watcher request')
-            if (this.state.peerConnections[requestingSocketId]) {
+            let {
+                audio_track_id,
+                video_track_id,
+                screen_audio_track_id,
+                screen_video_track_id,
+            } = this.state
+            if (
+                !audio_track_id &&
+                !video_track_id &&
+                !screen_audio_track_id &&
+                !screen_video_track_id
+            ) {
+                return
+            }
+
+            if (this.peerConnections[requestingSocketId]) {
                 console.error(
                     'watcherRequest event was fired between two already-existing peer connections.'
                 )
             }
 
-            let peerConnection =
-                this.state.peerConnections[requestingSocketId] ||
-                (await this.createPeerConnection(requestingSocketId))
+            const peerConnection = await this.createPeerConnection(requestingSocketId)
+            if (video_track_id || audio_track_id) {
+                const stream = this.ownVideo.current.srcObject
+                if (stream) {
+                    const videoTrack = stream.getVideoTracks()[0]
+                    if (videoTrack) {
+                        peerConnection.addTrack(videoTrack, stream)
+                    }
+                    const audioTrack = stream.getAudioTracks()[0]
+                    if (audioTrack) {
+                        peerConnection.addTrack(audioTrack, stream)
+                    }
+                }
+            }
 
-            const offer = await peerConnection.createOffer()
-            await peerConnection.setLocalDescription(offer)
-            socket.emit('offer', { offer, sendToSocketId: requestingSocketId })
-
-            this.setState({
-                peerConnections: Object.assign({}, this.state.peerConnections, {
-                    [requestingSocketId]: peerConnection,
-                }),
-            })
+            this.peerConnections[requestingSocketId] = peerConnection
         })
 
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
@@ -56,7 +70,6 @@ export default class VideoMain extends React.Component {
                 // is the new offer because someone stopped streaming a track?
                 let allRemainingTracks = []
                 Object.values(this.peerConnections).forEach((pc) => {
-                    console.log('remainingOtherSenders', pc.getSenders())
                     const remainingOtherSenders = pc
                         .getSenders()
                         .filter(
@@ -327,20 +340,22 @@ export default class VideoMain extends React.Component {
             }
 
             try {
-                const stream = await mediaDevices.getUserMedia({
+                const localStream = await mediaDevices.getUserMedia({
                     video: !!this.state.video_track_id,
                     audio: true,
                 })
 
                 // Step 3 - Add all tracks to the feed (video would replace existing video track)
-                const allTracks = stream.getTracks()
+                const allTracks = localStream.getTracks()
                 Object.values(this.peerConnections).forEach((pc) => {
-                    allTracks.forEach((t) => pc.addTrack(t, stream))
+                    allTracks.forEach((t) => pc.addTrack(t, localStream))
                 })
+                this.ownVideo.current.srcObject = localStream
+                await this.ownVideo.current.play()
 
                 // Step 4 - Update state and emit the update
-                const audioTrack = stream.getAudioTracks()[0]
-                const videoTrack = this.state.video_track_id && stream.getVideoTracks()[0]
+                const audioTrack = localStream.getAudioTracks()[0]
+                const videoTrack = this.state.video_track_id && localStream.getVideoTracks()[0]
                 this.setState(
                     { audio_track_id: audioTrack.id, video_track_id: videoTrack && videoTrack.id },
                     () => {

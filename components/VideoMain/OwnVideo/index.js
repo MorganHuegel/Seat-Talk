@@ -21,7 +21,7 @@ const OwnVideo = React.forwardRef((props, ref) => {
                         <FontAwesomeIcon icon={faAlignRight} />
                     </button>
                 </div>
-                <video ref={ref} id="own-video" />
+                <video ref={ref} id="own-video" muted />
             </div>
         </div>
     )
