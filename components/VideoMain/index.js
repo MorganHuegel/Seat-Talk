@@ -20,6 +20,27 @@ export default class VideoMain extends React.Component {
         this.peerConnections = {}
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        // if allClientsInRoom changes, check that one of the clients didn't leave the room
+        if (prevProps.allClientsInRoom.length > this.props.allClientsInRoom.length) {
+            let clientWhoLeft = prevProps.allClientsInRoom.find(
+                (client) =>
+                    !this.props.allClientsInRoom.find((c) => c.socket_id === client.socket_id)
+            )
+
+            this.setState({
+                availableTracks: this.state.availableTracks.filter((track) => {
+                    return ![
+                        clientWhoLeft.audio_track_id,
+                        clientWhoLeft.video_track_id,
+                        clientWhoLeft.screen_audio_track_id,
+                        clientWhoLeft.screen_video_track_id,
+                    ].includes(track.id)
+                }),
+            })
+        }
+    }
+
     componentDidMount() {
         const { socket } = this.props
 
@@ -84,7 +105,6 @@ export default class VideoMain extends React.Component {
                         )
                     remainingOtherSenders.forEach((sender) => allRemainingTracks.push(sender.track))
                 })
-                console.log('allRemainingTracks', allRemainingTracks)
                 this.setState({ availableTracks: allRemainingTracks })
             }
 
@@ -134,6 +154,22 @@ export default class VideoMain extends React.Component {
          */
     }
 
+    componentWillUnmount() {
+        Object.values(this.peerConnections).forEach((pc) => {
+            const senders = pc.getSenders()
+            if (senders.length) {
+                senders.forEach((sender) => {
+                    if (sender.track) {
+                        sender.track.stop()
+                    }
+                    pc.removeTrack(sender)
+                })
+            }
+
+            pc.close()
+        })
+    }
+
     createPeerConnection = async (peerSocketId) => {
         const { socket } = this.props
 
@@ -160,9 +196,6 @@ export default class VideoMain extends React.Component {
         peerConnection.ontrack = async (event) => {
             console.log('onTrack fired')
             this.setState({ availableTracks: [...this.state.availableTracks, event.track] })
-            // const stream = event.track
-            // this.broadcastVideo.current.srcObject = event.streams[0]
-            // await this.broadcastVideo.current.play()
         }
         peerConnection.onremovetrack = (event) => {
             // onremovetrack method coming soon??
