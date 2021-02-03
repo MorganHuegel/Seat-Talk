@@ -1,6 +1,6 @@
 import React from 'react'
 import style from '../../styles/Components/VideoMain/VideoMain.module.css'
-import { AudioButton, VideoButton, ShareButton, PeerConnectionButton } from '../Buttons'
+import { AudioButton, VideoButton, ShareButton } from '../Buttons'
 import OwnVideo from './OwnVideo'
 import BroadcastVideo from './BroadcastVideo'
 

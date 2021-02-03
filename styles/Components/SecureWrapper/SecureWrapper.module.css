@@ -1,0 +1,47 @@
+.modalContainer {
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.formContainer {
+    width: calc(100vw - 40px);
+    max-width: 350px;
+    background-color: white;
+    padding: 20px;
+}
+.formHeader {
+    margin-top: 0px;
+}
+.buttonContainer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.joinButton {
+    background-color: rgb(18, 115, 153);
+    color: white;
+    padding: 10px 5px;
+    border-radius: 5px;
+    font-size: 1.2rem;
+}
+.joinButton:hover,
+.joinButton:focus {
+    cursor: pointer;
+    background-color: rgb(8, 105, 143);
+}
+
+.homeLink {
+    color: rgb(18, 115, 153);
+    font-size: 1.2rem;
+}
+.homeLink:hover,
+.homeLink:focus {
+    cursor: pointer;
+    color: rgb(08, 95, 133);
+}
