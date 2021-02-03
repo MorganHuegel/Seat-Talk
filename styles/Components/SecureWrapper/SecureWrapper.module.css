@@ -15,8 +15,27 @@
     padding: 20px;
 }
 .formHeader {
-    margin-top: 0px;
+    margin: 0px 0px 15px 0px;
 }
+.formInput {
+    margin: 7px 0px 15px 0px;
+    display: block;
+    width: 100%;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    border: 1px solid gray;
+    padding: 7px;
+}
+.formInput.required {
+    border: 1px solid red;
+    background-color: rgb(255, 230, 230);
+}
+.requiredMessage {
+    font-size: 0.8rem;
+    color: red;
+    font-style: italic;
+}
+
 .buttonContainer {
     display: flex;
     align-items: flex-end;
@@ -38,7 +57,7 @@
 
 .homeLink {
     color: rgb(18, 115, 153);
-    font-size: 1.2rem;
+    font-size: 0.8rem;
 }
 .homeLink:hover,
 .homeLink:focus {
