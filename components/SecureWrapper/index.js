@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import style from '../../styles/Components/SecureWrapper/SecureWrapper.module.css'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import jwt from 'jsonwebtoken'
 
 const SecureWrapper = (props) => {
     const currentPath = useRouter().pathname
@@ -9,22 +10,58 @@ const SecureWrapper = (props) => {
     const [requiredMessage, setRequiredMessage] = useState(false)
     const [displayName, setDisplayName] = useState('')
     const displayNameInput = useRef()
+    const rememberMeInput = useRef()
 
     useEffect(() => {
         // must put this code in useEffect because window is not defined when server-rendered
-        const webToken = window.localStorage.getItem('authToken')
-        if (webToken) {
-            setDisplayName('fooBar') // decode web token
+        const authToken = window.localStorage.getItem('authToken')
+        if (authToken) {
+            try {
+                let decoded = jwt.verify(authToken, process.env.NEXT_PUBLIC_JWT_SECRET)
+                let { name, exp } = decoded
+                if (new Date().getTime() / 1000 > exp) {
+                    window.localStorage.removeItem('authToken')
+                    return
+                } else {
+                    setDisplayName(name)
+                }
+            } catch (err) {
+                console.log('decoding error: ', err)
+            }
         }
     }, [])
 
-    function handleClickJoin() {
-        let name = displayNameInput.current.value
-        if (!name) {
-            setRequiredMessage(true)
+    async function handleClickJoin() {
+        if (displayName) {
+            return setAcceptJoin(true)
         }
 
-        // get JSON Web Token and store in local storage
+        let name = displayNameInput.current.value
+        let rememberMe = rememberMeInput.current.checked
+
+        if (!name) {
+            return setRequiredMessage(true)
+        }
+
+        if (rememberMe) {
+            // get JSON web token
+            let response = await fetch('/api/user', {
+                method: 'POST',
+                body: JSON.stringify({ name }),
+            })
+            response = await response.json()
+            if (response.error) {
+                console.error(response.error)
+                setDisplayName(name)
+                setAcceptJoin(true)
+                return
+            }
+
+            const { authToken } = response
+            window.localStorage.setItem('authToken', authToken)
+        }
+
+        setDisplayName(name)
         setAcceptJoin(true)
     }
 
@@ -52,6 +89,12 @@ const SecureWrapper = (props) => {
                                     ref={displayNameInput}
                                     onChange={() => setRequiredMessage(false)}
                                 />
+                                <div className={style.formCheckbox}>
+                                    <label>
+                                        <input type="checkbox" ref={rememberMeInput} />
+                                        &nbsp;Remember me
+                                    </label>
+                                </div>
                             </>
                         )}
                         <div className={style.buttonContainer}>

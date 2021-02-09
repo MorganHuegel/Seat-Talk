@@ -8,15 +8,18 @@
     align-items: center;
     justify-content: center;
 }
+
 .formContainer {
     width: calc(100vw - 40px);
     max-width: 350px;
     background-color: white;
     padding: 20px;
 }
+
 .formHeader {
     margin: 0px 0px 15px 0px;
 }
+
 .formInput {
     margin: 7px 0px 15px 0px;
     display: block;
@@ -34,6 +37,10 @@
     font-size: 0.8rem;
     color: red;
     font-style: italic;
+}
+
+.formCheckbox {
+    margin: 0px 0px 15px 0px;
 }
 
 .buttonContainer {
