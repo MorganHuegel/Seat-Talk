@@ -24,6 +24,7 @@ CREATE TABLE room_clients(
 
 CREATE TABLE clients(
   id serial PRIMARY KEY,
+  display_name VARCHAR,
   socket_id VARCHAR NOT NULL,
   audio_track_id VARCHAR,
   video_track_id VARCHAR,

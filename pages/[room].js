@@ -17,11 +17,11 @@ class Room extends React.Component {
     }
 
     componentDidMount() {
-        const { roomId } = this.props
+        const { roomId, displayName } = this.props
         this.socket = io()
         this.socket.on('connectConfirm', ({ clientDatabaseId }) => {
             this.setState({ clientDatabaseId }, () => {
-                this.socket.emit('joinRoom', { roomId, clientDatabaseId })
+                this.socket.emit('joinRoom', { roomId, clientDatabaseId, displayName })
             })
         })
         this.socket.on('newJoin', ({ allClientsInRoom, newSocketId }) => {
@@ -71,6 +71,7 @@ class Room extends React.Component {
         return (
             this.socket && (
                 <VideoMain
+                    displayName={this.props.displayName}
                     socket={this.socket}
                     roomId={this.props.roomId}
                     clientDatabaseId={this.state.clientDatabaseId}
@@ -81,13 +82,13 @@ class Room extends React.Component {
     }
 }
 
-export default function HOCRoom() {
+export default function HOCRoom(props) {
     const router = useRouter()
     const roomId = router.query.room
 
     if (!roomId) {
         return null
     } else {
-        return <Room roomId={roomId} />
+        return <Room roomId={roomId} {...props} />
     }
 }

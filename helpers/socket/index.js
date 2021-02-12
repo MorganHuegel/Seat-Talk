@@ -37,7 +37,7 @@ async function handleConnect(socket, io) {
     }
 }
 
-async function handleJoinRoom(socket, io, roomId, clientDatabaseId) {
+async function handleJoinRoom(socket, io, roomId, clientDatabaseId, displayName) {
     // clientDatabaseId is the id column in 'clients' table
     try {
         let activeRooms = await knex
@@ -46,8 +46,6 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId) {
             .whereNull('closed_at')
             .where({ room_id: roomId })
 
-        // write stream client's video to file at /streams/[room(roomId)]/[clientId]/video.txt|audio.txt|screen.txt
-        // other client creates readStream from that file
         if (activeRooms.length > 1) {
             throw new Error('Yikes! There are more than one active rooms with ID ' + roomId)
         }
@@ -62,6 +60,7 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId) {
 
         socket.join(roomId)
         const client_pk = clientDatabaseId
+        await knex('clients').where('id', '=', client_pk).update({ display_name: displayName })
         await knex('room_clients').insert({ room_pk, client_pk })
         const allClientsInRoom = await _getAllClientsInRoom(room_pk)
         if (allClientsInRoom.length < 1) {

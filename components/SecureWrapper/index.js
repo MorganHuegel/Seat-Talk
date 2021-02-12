@@ -69,6 +69,15 @@ const SecureWrapper = (props) => {
         setDisplayName('')
     }
 
+    function renderChildrenWithProps() {
+        return React.Children.map(props.children, (child) => {
+            if (React.isValidElement(child)) {
+                return React.cloneElement(child, { displayName })
+            }
+            return child
+        })
+    }
+
     return (
         <>
             {currentPath === '/[room]' && !acceptJoin && (
@@ -122,7 +131,7 @@ const SecureWrapper = (props) => {
                     </div>
                 </div>
             )}
-            {(currentPath !== '/[room]' || acceptJoin) && props.children}
+            {(currentPath !== '/[room]' || acceptJoin) && renderChildrenWithProps()}
         </>
     )
 }

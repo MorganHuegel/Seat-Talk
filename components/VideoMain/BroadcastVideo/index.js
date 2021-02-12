@@ -51,10 +51,6 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
                 <div className={style.buttonContainer}>
                     {Object.keys(peerConnections)
                         .map((socketId) => {
-                            if (peerConnections[socketId] instanceof Promise) {
-                                // still negotiating offer-answer sequence
-                                return null
-                            }
                             const clientInfo = allClientsInRoom.find(
                                 (client) => client.socket_id === socketId
                             )
@@ -62,8 +58,11 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
                                 // peer is probably disconnecting
                                 return null
                             }
-                            const { video_track_id, screen_video_track_id } = clientInfo
-                            const displayName = clientInfo.socket_id
+                            const {
+                                video_track_id,
+                                screen_video_track_id,
+                                display_name,
+                            } = clientInfo
 
                             let receivers =
                                 peerConnections[socketId] &&
@@ -86,7 +85,7 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
                                 <React.Fragment key={socketId}>
                                     {isVideoTrackAvailable && (
                                         <PeerConnectionButton
-                                            text={displayName + "'s Video"}
+                                            text={display_name + "'s Video"}
                                             onClick={(e) => {
                                                 setCurrentVideoTrackId(video_track_id)
                                                 e.currentTarget.blur()
@@ -96,7 +95,7 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
                                     )}
                                     {isScreenTrackAvailable && (
                                         <PeerConnectionButton
-                                            text={displayName + "'s Screen"}
+                                            text={display_name + "'s Screen"}
                                             onClick={(e) => {
                                                 setCurrentVideoTrackId(screen_video_track_id)
                                                 e.currentTarget.blur()

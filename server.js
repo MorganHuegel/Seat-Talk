@@ -19,8 +19,8 @@ const {
 } = require('./helpers/socket')
 io.on('connect', (socket) => {
     handleConnect(socket, io)
-    socket.on('joinRoom', ({ roomId, clientDatabaseId }) =>
-        handleJoinRoom(socket, io, roomId, clientDatabaseId)
+    socket.on('joinRoom', ({ roomId, clientDatabaseId, displayName }) =>
+        handleJoinRoom(socket, io, roomId, clientDatabaseId, displayName)
     )
     socket.on('updateSharing', (clientInfo, roomId) =>
         handleUpdateSharing(socket, io, clientInfo, roomId)
