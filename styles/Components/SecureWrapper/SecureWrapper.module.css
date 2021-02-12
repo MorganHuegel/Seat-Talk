@@ -63,6 +63,10 @@
 }
 
 .homeLink {
+    background: none;
+    padding: 0;
+    text-decoration: underline;
+    border: none;
     color: rgb(18, 115, 153);
     font-size: 0.8rem;
 }

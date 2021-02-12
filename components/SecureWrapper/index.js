@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import style from '../../styles/Components/SecureWrapper/SecureWrapper.module.css'
 import { useRouter } from 'next/router'
-import Link from 'next/link'
 import jwt from 'jsonwebtoken'
 
 const SecureWrapper = (props) => {
@@ -65,6 +64,11 @@ const SecureWrapper = (props) => {
         setAcceptJoin(true)
     }
 
+    function handleEditName() {
+        localStorage.removeItem('authToken')
+        setDisplayName('')
+    }
+
     return (
         <>
             {currentPath === '/[room]' && !acceptJoin && (
@@ -105,9 +109,15 @@ const SecureWrapper = (props) => {
                             >
                                 Join Room
                             </button>
-                            <Link href="/">
-                                <a className={style.homeLink}>Return Home</a>
-                            </Link>
+                            {displayName && (
+                                <button
+                                    type="button"
+                                    onClick={handleEditName}
+                                    className={style.homeLink}
+                                >
+                                    Edit name
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
