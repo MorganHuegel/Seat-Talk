@@ -65,14 +65,16 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
                         let isScreen = trackId === clientInfo.screen_video_track_id
                         let { display_name } = clientInfo
                         return (
-                            <PeerConnectionButton
-                                text={`${display_name}'s ${isScreen ? 'Screen' : 'Face'}`}
-                                onClick={(e) => {
-                                    setCurrentVideoTrackId(trackId)
-                                    e.currentTarget.blur()
-                                }}
-                                isActive={trackId === currentVideoTrackId}
-                            />
+                            <React.Fragment key={clientInfo.socket_id + isScreen}>
+                                <PeerConnectionButton
+                                    text={`${display_name}'s ${isScreen ? 'Screen' : 'Face'}`}
+                                    onClick={(e) => {
+                                        setCurrentVideoTrackId(trackId)
+                                        e.currentTarget.blur()
+                                    }}
+                                    isActive={trackId === currentVideoTrackId}
+                                />
+                            </React.Fragment>
                         )
                     })}
                 </div>

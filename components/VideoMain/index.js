@@ -17,6 +17,7 @@ export default class VideoMain extends React.Component {
         }
         this.broadcastVideo = React.createRef()
         this.ownVideo = React.createRef()
+        this.ownScreenVideo = React.createRef()
         this.peerConnections = {}
     }
 
@@ -80,6 +81,11 @@ export default class VideoMain extends React.Component {
                         peerConnection.addTrack(audioTrack, stream)
                     }
                 }
+            }
+
+            if (screen_video_track_id || screen_audio_track_id) {
+                const stream = this.ownScreenVideo.current.srcObject
+                stream.getTracks().forEach((t) => peerConnection.addTrack(t))
             }
 
             this.peerConnections[requestingSocketId] = peerConnection
@@ -258,7 +264,6 @@ export default class VideoMain extends React.Component {
                     }
                 })
                 if (audioTrack) {
-                    console.log('audioTrack:', audioTrack)
                     pc.addTrack(audioTrack)
                 }
             })
@@ -469,6 +474,8 @@ export default class VideoMain extends React.Component {
                         sampleRate: 44100,
                     },
                 })
+                // display is set to none, but makes for easy retrieval without having to restart the displayMedia
+                this.ownScreenVideo.current.srcObject = stream
 
                 // Step 3 = Add video and audio to each peerConnection
                 let videoTrack = stream.getVideoTracks()[0]
@@ -481,7 +488,6 @@ export default class VideoMain extends React.Component {
                     }
                 })
                 Object.values(this.peerConnections).forEach((connection) => {
-                    console.log('connecition: ', connection)
                     if (videoTrack) {
                         connection.addTrack(videoTrack)
                     }
@@ -543,6 +549,7 @@ export default class VideoMain extends React.Component {
                     availableTracks={availableTracks}
                 />
                 <OwnVideo ref={this.ownVideo} />
+                <video ref={this.ownScreenVideo} style={{ display: 'none' }} />
                 {errorMessage && <p>{errorMessage}</p>}
                 <div className={style.buttonContainer}>
                     <AudioButton
