@@ -415,20 +415,43 @@ export default class VideoMain extends React.Component {
         document.getElementById('share-button').blur()
 
         // if it is currently playing, toggle it OFF
-        if (this.state.screen_track_id) {
-            Object.values(this.state.peerConnections).forEach((connection) => {
-                const track = connection
-                    .getSenders()
-                    .find((sender) => sender.track.id === this.state.screen_track_id)
-                connection.removeTrack(track)
+        if (this.state.screen_video_track_id || this.state.screen_audio_track_id) {
+            Object.values(this.peerConnections).forEach((connection) => {
+                function removeScreenTrack(trackId) {
+                    const sender = connection
+                        .getSenders()
+                        .find((sender) => sender.track && sender.track.id === trackId)
+                    if (sender) {
+                        sender.track.stop()
+                        connection.removeTrack(sender)
+                    }
+                }
+
+                if (this.state.screen_video_track_id) {
+                    removeScreenTrack(this.state.screen_video_track_id)
+                }
+                if (this.state.screen_audio_track_id) {
+                    removeScreenTrack(this.state.screen_audio_track_id)
+                }
             })
-            return this.setState({ screen_track_id: null, errorMessage: '' }, () => {
-                this.emitUpdateSharing()
-            })
+            return this.setState(
+                { screen_video_track_id: null, screen_audio_track_id: null, errorMessage: '' },
+                () => {
+                    this.emitUpdateSharing()
+                }
+            )
         }
 
         // toggling ON
         else {
+            // Step 1 - Create RTCPeerConnections (if not there yet)
+            this.props.allClientsInRoom.forEach(async (c) => {
+                if (!this.peerConnections[c.socket_id] && c.socket_id !== this.props.socket.id) {
+                    this.peerConnections[c.socket_id] = await this.createPeerConnection(c.socket_id)
+                }
+            })
+
+            // Step 2 - Get screen share screen
             const mediaDevices = window && window.navigator && window.navigator.mediaDevices
             if (!mediaDevices) {
                 return this.setState({
@@ -446,9 +469,19 @@ export default class VideoMain extends React.Component {
                         sampleRate: 44100,
                     },
                 })
+
+                // Step 3 = Add video and audio to each peerConnection
                 let videoTrack = stream.getVideoTracks()[0]
                 let audioTrack = stream.getAudioTracks()[0]
-                Object.values(this.state.peerConnections).forEach((connection) => {
+
+                stream.getTracks().forEach((t) => {
+                    t.onended = () => {
+                        // do the same thing as clicking the button to stop it. why rewrite code??
+                        document.getElementById('share-button').click()
+                    }
+                })
+                Object.values(this.peerConnections).forEach((connection) => {
+                    console.log('connecition: ', connection)
                     if (videoTrack) {
                         connection.addTrack(videoTrack)
                     }
@@ -456,6 +489,8 @@ export default class VideoMain extends React.Component {
                         connection.addTrack(audioTrack)
                     }
                 })
+
+                // Step 4 - Update state
                 this.setState(
                     {
                         screen_audio_track_id: audioTrack ? audioTrack.id : null,
