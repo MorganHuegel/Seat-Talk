@@ -5,9 +5,9 @@ import { PeerConnectionButton } from '../../Buttons'
 const BroadcastVideo = React.forwardRef((props, ref) => {
     let { peerConnections, allClientsInRoom, availableTracks } = props
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
-    console.log('availableTracks', availableTracks)
 
     useEffect(() => {
+        console.log('availableTracks', availableTracks)
         // remove tracks that are no longer available
         if (!availableTracks.length) {
             ref.current.srcObject = null
@@ -29,7 +29,7 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
     }, [availableTracks])
 
     async function addTracks() {
-        const stream = ref.current.srcObject || new MediaStream()
+        const stream = new MediaStream()
         availableTracks.forEach((t) => {
             if (t.kind === 'audio' || t.id === currentVideoTrackId) {
                 stream.addTrack(t)
