@@ -3,7 +3,7 @@ import style from '../../../styles/Components/VideoMain/BroadcastVideo/Broadcast
 import { PeerConnectionButton } from '../../Buttons'
 
 const BroadcastVideo = React.forwardRef((props, ref) => {
-    let { peerConnections, allClientsInRoom, availableTracks } = props
+    let { allClientsInRoom, availableTracks } = props
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
 
     useEffect(() => {

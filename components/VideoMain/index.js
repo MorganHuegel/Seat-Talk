@@ -21,6 +21,23 @@ export default class VideoMain extends React.Component {
         this.peerConnections = {}
     }
 
+    removeUnavailableTracks = (prevProps) => {
+        if (prevProps.allClientsInRoom !== this.props.allClientsInRoom) {
+            this.setState({
+                availableTracks: this.state.availableTracks.filter((track) => {
+                    return this.props.allClientsInRoom.find((client) => {
+                        return [
+                            client.audio_track_id,
+                            client.video_track_id,
+                            client.screen_audio_track_id,
+                            client.screen_video_track_id,
+                        ].includes(track.id)
+                    })
+                }),
+            })
+        }
+    }
+
     componentDidUpdate(prevProps, prevState) {
         // if allClientsInRoom changes, check that one of the clients didn't leave the room
         if (prevProps.allClientsInRoom.length > this.props.allClientsInRoom.length) {
@@ -29,16 +46,21 @@ export default class VideoMain extends React.Component {
                     !this.props.allClientsInRoom.find((c) => c.socket_id === client.socket_id)
             )
 
-            this.setState({
-                availableTracks: this.state.availableTracks.filter((track) => {
-                    return ![
-                        clientWhoLeft.audio_track_id,
-                        clientWhoLeft.video_track_id,
-                        clientWhoLeft.screen_audio_track_id,
-                        clientWhoLeft.screen_video_track_id,
-                    ].includes(track.id)
-                }),
-            })
+            this.setState(
+                {
+                    availableTracks: this.state.availableTracks.filter((track) => {
+                        return ![
+                            clientWhoLeft.audio_track_id,
+                            clientWhoLeft.video_track_id,
+                            clientWhoLeft.screen_audio_track_id,
+                            clientWhoLeft.screen_video_track_id,
+                        ].includes(track.id)
+                    }),
+                },
+                () => this.removeUnavailableTracks(prevProps)
+            )
+        } else {
+            this.removeUnavailableTracks(prevProps)
         }
     }
 
@@ -93,27 +115,6 @@ export default class VideoMain extends React.Component {
 
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
             console.log('received offer')
-            if (this.peerConnections[sentFromSocketId]) {
-                // is the new offer because someone stopped streaming a track?
-                let allRemainingTracks = []
-                Object.values(this.peerConnections).forEach((pc) => {
-                    const remainingOtherSenders = pc
-                        .getSenders()
-                        .filter(
-                            (sender) =>
-                                sender.track &&
-                                ![
-                                    this.state.audio_track_id,
-                                    this.state.video_track_id,
-                                    this.state.screen_video_track_id,
-                                    this.state.screen_audio_track_id,
-                                ].includes(sender.track.id)
-                        )
-                    remainingOtherSenders.forEach((sender) => allRemainingTracks.push(sender.track))
-                })
-                this.setState({ availableTracks: allRemainingTracks })
-            }
-
             let peerConnection =
                 this.peerConnections[sentFromSocketId] ||
                 (await this.createPeerConnection(sentFromSocketId))
@@ -544,7 +545,6 @@ export default class VideoMain extends React.Component {
             <div>
                 <BroadcastVideo
                     ref={this.broadcastVideo}
-                    peerConnections={this.peerConnections}
                     allClientsInRoom={allClientsInRoom}
                     availableTracks={availableTracks}
                 />
