@@ -73,6 +73,7 @@ export default class VideoMain extends React.Component {
         const { socket } = this.props
 
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
+            console.log('watcher request received')
             let {
                 audio_track_id,
                 video_track_id,
@@ -118,6 +119,7 @@ export default class VideoMain extends React.Component {
         })
 
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
+            console.log('offer received')
             let peerConnection =
                 this.peerConnections[sentFromSocketId] ||
                 (await this.createPeerConnection(sentFromSocketId))
@@ -136,12 +138,14 @@ export default class VideoMain extends React.Component {
         })
 
         socket.on('answer', async ({ localDescription, sentFromSocketId }) => {
+            console.log('answer received')
             const peerConnection = this.peerConnections[sentFromSocketId]
             let remoteDescription = new RTCSessionDescription(localDescription)
             await peerConnection.setRemoteDescription(remoteDescription)
         })
 
         socket.on('candidate', async ({ candidate, fromSocketId }) => {
+            console.log('candidate received')
             try {
                 const peerConnection = this.peerConnections[fromSocketId]
                 if (peerConnection) {
@@ -183,6 +187,7 @@ export default class VideoMain extends React.Component {
 
         let peerConnection = new RTCPeerConnection(this.getRTCConfig())
         peerConnection.onicecandidate = (event) => {
+            console.log('onicecandidate')
             if (event.candidate) {
                 socket.emit('candidate', {
                     sendToSocketId: peerSocketId,
@@ -196,9 +201,11 @@ export default class VideoMain extends React.Component {
             }
         }
         peerConnection.onnegotiationneeded = async (event) => {
+            console.log('negotiotionneeded')
             this.sendNegotiationOffer(peerConnection, peerSocketId)
         }
         peerConnection.ontrack = async (event) => {
+            console.log('ontrack (added)')
             this.setState({ availableTracks: [...this.state.availableTracks, event.track] })
         }
         peerConnection.onremovetrack = (event) => {
