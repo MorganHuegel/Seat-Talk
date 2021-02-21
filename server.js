@@ -47,6 +47,7 @@ io.on('connect', (socket) => {
 // Next setup
 const next = require('next')
 const dev = process.env.NODE_ENV !== 'production'
+const port = process.env.PORT || 3000
 const nextApp = next({ dev })
 const nextHandler = nextApp.getRequestHandler()
 
@@ -55,10 +56,10 @@ nextApp.prepare().then(() => {
         return nextHandler(req, res)
     })
 
-    server.listen(3000, (err) => {
+    server.listen(port, (err) => {
         if (err) {
             throw err
         }
-        console.log('listening on http://localhost:' + 3000)
+        console.log('listening on http://localhost:' + port)
     })
 })
