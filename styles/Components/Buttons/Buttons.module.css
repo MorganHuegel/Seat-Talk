@@ -61,6 +61,11 @@
 .slash > span:nth-child(2) {
     background-color: white;
 }
+.loadingBubbles {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
 
 .peerConnectionButton {
     background-color: white;

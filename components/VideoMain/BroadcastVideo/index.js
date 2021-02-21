@@ -7,7 +7,6 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
 
     useEffect(() => {
-        console.log('availableTracks', availableTracks)
         // remove tracks that are no longer available
         if (!availableTracks.length) {
             ref.current.srcObject = null

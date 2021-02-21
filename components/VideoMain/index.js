@@ -8,6 +8,11 @@ export default class VideoMain extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            // loading state on buttons
+            is_audio_loading: false,
+            is_video_loading: false,
+            is_screen_share_loading: false,
+
             audio_track_id: null,
             video_track_id: null,
             screen_audio_track_id: null,
@@ -68,7 +73,6 @@ export default class VideoMain extends React.Component {
         const { socket } = this.props
 
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
-            console.log('received watcher request')
             let {
                 audio_track_id,
                 video_track_id,
@@ -114,7 +118,6 @@ export default class VideoMain extends React.Component {
         })
 
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
-            console.log('received offer')
             let peerConnection =
                 this.peerConnections[sentFromSocketId] ||
                 (await this.createPeerConnection(sentFromSocketId))
@@ -133,14 +136,12 @@ export default class VideoMain extends React.Component {
         })
 
         socket.on('answer', async ({ localDescription, sentFromSocketId }) => {
-            console.log('received answer')
             const peerConnection = this.peerConnections[sentFromSocketId]
             let remoteDescription = new RTCSessionDescription(localDescription)
             await peerConnection.setRemoteDescription(remoteDescription)
         })
 
         socket.on('candidate', async ({ candidate, fromSocketId }) => {
-            console.log('received candidate event')
             try {
                 const peerConnection = this.peerConnections[fromSocketId]
                 if (peerConnection) {
@@ -182,7 +183,6 @@ export default class VideoMain extends React.Component {
 
         let peerConnection = new RTCPeerConnection(this.getRTCConfig())
         peerConnection.onicecandidate = (event) => {
-            console.log('onicecandidate')
             if (event.candidate) {
                 socket.emit('candidate', {
                     sendToSocketId: peerSocketId,
@@ -191,22 +191,18 @@ export default class VideoMain extends React.Component {
             }
         }
         peerConnection.oniceconnectionstatechange = (event) => {
-            console.log('oniceconnectionstatechange')
             if (peerConnection.iceConnectionState === 'failed') {
                 peerConnection.restartIce()
             }
         }
         peerConnection.onnegotiationneeded = async (event) => {
-            console.log('onnegotiationneeded')
             this.sendNegotiationOffer(peerConnection, peerSocketId)
         }
         peerConnection.ontrack = async (event) => {
-            console.log('onTrack fired')
             this.setState({ availableTracks: [...this.state.availableTracks, event.track] })
         }
         peerConnection.onremovetrack = (event) => {
             // onremovetrack method coming soon??
-            console.log('onRemoveTrack fired!', event)
         }
 
         return peerConnection
@@ -281,6 +277,8 @@ export default class VideoMain extends React.Component {
 
         // toggling ON
         else {
+            this.setState({ is_video_loading: true })
+
             // Step 1 - Create RTCPeerConnections (if not there yet)
             this.props.allClientsInRoom.forEach(async (c) => {
                 if (!this.peerConnections[c.socket_id] && c.socket_id !== this.props.socket.id) {
@@ -316,7 +314,11 @@ export default class VideoMain extends React.Component {
                 const videoTrack = localStream.getVideoTracks()[0]
                 const audioTrack = this.state.audio_track_id && localStream.getAudioTracks()[0]
                 this.setState(
-                    { video_track_id: videoTrack.id, audio_track_id: audioTrack && audioTrack.id },
+                    {
+                        is_video_loading: false,
+                        video_track_id: videoTrack.id,
+                        audio_track_id: audioTrack && audioTrack.id,
+                    },
                     () => {
                         this.emitUpdateSharing()
                     }
@@ -330,6 +332,7 @@ export default class VideoMain extends React.Component {
                 }
 
                 return this.setState({
+                    is_video_loading: false,
                     video_track_id: null,
                     errorMessage,
                 })
@@ -362,6 +365,8 @@ export default class VideoMain extends React.Component {
 
         // toggling ON
         else {
+            this.setState({ is_audio_loading: true })
+
             // Step 1 - Create RTCPeerConnections (if not there yet)
             this.props.allClientsInRoom.forEach(async (c) => {
                 if (!this.peerConnections[c.socket_id] && c.socket_id !== this.props.socket.id) {
@@ -396,7 +401,11 @@ export default class VideoMain extends React.Component {
                 const audioTrack = localStream.getAudioTracks()[0]
                 const videoTrack = this.state.video_track_id && localStream.getVideoTracks()[0]
                 this.setState(
-                    { audio_track_id: audioTrack.id, video_track_id: videoTrack && videoTrack.id },
+                    {
+                        is_audio_loading: false,
+                        audio_track_id: audioTrack.id,
+                        video_track_id: videoTrack && videoTrack.id,
+                    },
                     () => {
                         this.emitUpdateSharing()
                     }
@@ -409,6 +418,7 @@ export default class VideoMain extends React.Component {
                 }
 
                 return this.setState({
+                    is_audio_loading: false,
                     audio_track_id: null,
                     errorMessage,
                 })
@@ -450,6 +460,8 @@ export default class VideoMain extends React.Component {
 
         // toggling ON
         else {
+            this.setState({ is_screen_share_loading: true })
+
             // Step 1 - Create RTCPeerConnections (if not there yet)
             this.props.allClientsInRoom.forEach(async (c) => {
                 if (!this.peerConnections[c.socket_id] && c.socket_id !== this.props.socket.id) {
@@ -500,6 +512,7 @@ export default class VideoMain extends React.Component {
                 // Step 4 - Update state
                 this.setState(
                     {
+                        is_screen_share_loading: false,
                         screen_audio_track_id: audioTrack ? audioTrack.id : null,
                         screen_video_track_id: videoTrack ? videoTrack.id : null,
                     },
@@ -515,6 +528,7 @@ export default class VideoMain extends React.Component {
                 }
 
                 return this.setState({
+                    is_screen_share_loading: false,
                     screen_audio_track_id: null,
                     screen_video_track_id: null,
                     errorMessage,
@@ -533,6 +547,9 @@ export default class VideoMain extends React.Component {
 
     render() {
         const {
+            is_audio_loading,
+            is_video_loading,
+            is_screen_share_loading,
             audio_track_id,
             video_track_id,
             screen_video_track_id,
@@ -555,14 +572,17 @@ export default class VideoMain extends React.Component {
                     <AudioButton
                         handleClick={this.handleClickAudio}
                         isStreaming={!!audio_track_id}
+                        isLoading={is_audio_loading}
                     />
                     <VideoButton
                         handleClick={this.handleClickVideo}
                         isStreaming={!!video_track_id}
+                        isLoading={is_video_loading}
                     />
                     <ShareButton
                         handleClick={this.handleClickShareScreen}
                         isStreaming={!!screen_video_track_id}
+                        isLoading={is_screen_share_loading}
                     />
                 </div>
             </div>

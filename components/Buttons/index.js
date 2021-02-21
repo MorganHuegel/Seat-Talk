@@ -1,22 +1,33 @@
 import React from 'react'
 import style from '../../styles/Components/Buttons/Buttons.module.css'
+import ReactLoading from 'react-loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMicrophone, faVideo, faDesktop } from '@fortawesome/free-solid-svg-icons'
 import Tooltip from '../Tooltip'
 
-const Button = ({ handleClick, isStreaming, icon, tooltip, id }) => {
+const Button = ({ handleClick, isStreaming, isLoading, icon, tooltip, id }) => {
     return (
         <button
             type="button"
             onClick={handleClick}
             className={`${style.button} ${isStreaming && style.isStreaming}`}
             id={id}
+            disabled={isLoading}
         >
-            {!isStreaming && (
+            {!isStreaming && !isLoading && (
                 <span className={style.slash}>
                     <span />
                     <span />
                 </span>
+            )}
+            {isLoading && (
+                <ReactLoading
+                    type="bubbles"
+                    color="rgba(255, 0, 0, 0.5)"
+                    width="60px"
+                    height="60px"
+                    className={style.loadingBubbles}
+                />
             )}
             {tooltip && (
                 <span className={style.tooltip}>

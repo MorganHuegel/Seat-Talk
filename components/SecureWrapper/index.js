@@ -25,7 +25,7 @@ const SecureWrapper = (props) => {
                     setDisplayName(name)
                 }
             } catch (err) {
-                console.log('decoding error: ', err)
+                console.error('decoding error: ', err)
             }
         }
     }, [])
