@@ -89,3 +89,16 @@
 .peerConnectionButton.active:focus {
     background-color: rgb(120, 120, 120);
 }
+
+.joinButton {
+    background-color: rgb(18, 115, 153);
+    color: white;
+    padding: 10px 5px;
+    border-radius: 5px;
+    font-size: 1.2rem;
+}
+.joinButton:hover,
+.joinButton:focus {
+    cursor: pointer;
+    background-color: rgb(8, 105, 143);
+}

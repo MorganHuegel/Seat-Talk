@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import style from '../../styles/Components/SecureWrapper/SecureWrapper.module.css'
 import { useRouter } from 'next/router'
 import jwt from 'jsonwebtoken'
+import { JoinButton } from '../Buttons'
 
 const SecureWrapper = (props) => {
     const currentPath = useRouter().pathname
@@ -111,13 +112,7 @@ const SecureWrapper = (props) => {
                             </>
                         )}
                         <div className={style.buttonContainer}>
-                            <button
-                                type="button"
-                                className={style.joinButton}
-                                onClick={handleClickJoin}
-                            >
-                                Join Room
-                            </button>
+                            <JoinButton handleClick={handleClickJoin} text="Join Room" />
                             {displayName && (
                                 <button
                                     type="button"

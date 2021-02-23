@@ -1,0 +1,75 @@
+.page {
+    width: 100vw;
+    height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.wordBubble {
+    position: relative;
+    left: 150px;
+    top: 15px;
+}
+.wordBubble .bubbleOuter {
+    border-radius: 50%;
+    width: 300px;
+    height: 150px;
+    position: relative;
+    border: 2px solid black;
+    z-index: 1;
+    background: white;
+}
+.wordBubble .bubbleInner {
+    border-radius: 50%;
+    position: absolute;
+    background: whtie;
+    top: 2px;
+    left: 2px;
+    z-index: 3;
+    background: white;
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+}
+.wordBubble .arrow {
+    border: 2px solid black;
+    background: white;
+    position: absolute;
+    top: 122px;
+    left: 51px;
+    width: 25px;
+    height: 25px;
+    z-index: 2;
+    transform: rotate(65deg);
+}
+.wordBubble .text {
+    position: absolute;
+    top: 30px;
+    left: 60px;
+    z-index: 4;
+    font-family: 'Architects Daughter', cursive;
+    width: calc(100% - 50px);
+    height: calc(100% - 10px);
+    font-size: 32px;
+}
+
+.join {
+    margin-top: 80px;
+}
+.join label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 13px;
+}
+.join input {
+    display: block;
+    margin-bottom: 13px;
+    padding: 5px;
+    border-radius: 3px;
+    border: 1px solid gray;
+}
+.join input::placeholder {
+    color: rgb(170, 170, 170);
+    font-style: italic;
+}

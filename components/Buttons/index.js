@@ -76,4 +76,10 @@ const PeerConnectionButton = (props) => (
     </button>
 )
 
-export { AudioButton, VideoButton, ShareButton, PeerConnectionButton }
+const JoinButton = (props) => (
+    <button type="button" className={style.joinButton} onClick={props.handleClick}>
+        {props.text}
+    </button>
+)
+
+export { AudioButton, VideoButton, ShareButton, PeerConnectionButton, JoinButton }
