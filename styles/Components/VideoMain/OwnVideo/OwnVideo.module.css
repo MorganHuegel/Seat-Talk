@@ -1,6 +1,6 @@
 .videoContainer {
     position: absolute;
-    bottom: 80px; /* height of the bottons div */
+    bottom: 65px; /* height of the bottons div */
     background: rgba(0, 0, 0, 0);
     width: 100%;
     display: flex;
@@ -33,15 +33,15 @@
 }
 
 .videoPlayer video {
-    width: 280px;
-    height: 210px;
+    width: 140px;
+    height: 105px;
     transition: width 0.3s, height 0.3s;
     background-color: black;
 }
 
 .videoContainer video:hover {
-    width: 560px;
-    height: 420px;
+    width: 280px;
+    height: 210px;
     transition: width 0.3s, height 0.3s;
 }
 

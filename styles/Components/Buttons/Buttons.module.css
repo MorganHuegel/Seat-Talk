@@ -2,9 +2,9 @@
 .button {
     border-radius: 50%;
     background-color: white;
-    width: 60px;
-    height: 60px;
-    margin: 0 20px;
+    width: 45px;
+    height: 45px;
+    margin: 0 12px;
     position: relative;
     outline: none;
 }
@@ -35,25 +35,25 @@
 
 /* ICON */
 .icon {
-    font-size: 24px;
-    line-height: 24px;
+    font-size: 18px;
+    line-height: 18px;
 }
 .icon > svg {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     vertical-align: top;
 }
 .slash {
     display: inline-block;
     transform: rotate(38deg);
     position: absolute;
-    top: 25px;
-    left: 8px;
+    top: 19px;
+    left: 5px;
 }
 .slash > span {
     display: block;
-    width: 38px;
-    height: 3px;
+    width: 32px;
+    height: 2.5px;
 }
 .slash > span:nth-child(1) {
     background-color: black;

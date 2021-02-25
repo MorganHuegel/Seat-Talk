@@ -24,8 +24,8 @@ const Button = ({ handleClick, isStreaming, isLoading, icon, tooltip, id }) => {
                 <ReactLoading
                     type="bubbles"
                     color="rgba(255, 0, 0, 0.5)"
-                    width="60px"
-                    height="60px"
+                    width="40px"
+                    height="45px"
                     className={style.loadingBubbles}
                 />
             )}

@@ -1,5 +1,5 @@
 .container {
-    height: calc(100vh - 80px);
+    height: calc(100vh - 65px);
 }
 
 .connectionOptions {
@@ -22,7 +22,7 @@
 }
 
 .videoContainer video {
-    height: calc(100vh - 160px);
+    height: calc(100vh - 148px);
     background-color: black;
     max-width: 100vw;
 }
