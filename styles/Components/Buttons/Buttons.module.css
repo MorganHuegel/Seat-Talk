@@ -138,6 +138,6 @@
     transition: color 0s ease-out;
 }
 .copyText {
-    position: absolute;
-    top: 100000px;
+    position: fixed;
+    top: 10000px;
 }
