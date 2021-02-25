@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import style from '../../../styles/Components/VideoMain/BroadcastVideo/BroadcastVideo.module.css'
 import { PeerConnectionButton } from '../../Buttons'
+import { useRouter } from 'next/router'
+import { CopyButton } from '../../Buttons'
 
 const BroadcastVideo = React.forwardRef((props, ref) => {
+    const router = useRouter()
     let { allClientsInRoom, availableTracks } = props
     let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
 
@@ -46,37 +49,11 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
 
     return (
         <div className={style.container}>
-            <div className={style.connectionOptions}>
-                <div className={style.buttonContainer}>
-                    {availableTracks.map((t) => {
-                        if (t.kind !== 'video') {
-                            return null
-                        }
-
-                        let trackId = t.id
-                        let clientInfo = allClientsInRoom.find((c) =>
-                            [c.video_track_id, c.screen_video_track_id].includes(trackId)
-                        )
-                        if (!clientInfo) {
-                            return null
-                        }
-
-                        let isScreen = trackId === clientInfo.screen_video_track_id
-                        let { display_name } = clientInfo
-                        return (
-                            <React.Fragment key={clientInfo.socket_id + isScreen}>
-                                <PeerConnectionButton
-                                    text={`${display_name}'s ${isScreen ? 'Screen' : 'Face'}`}
-                                    onClick={(e) => {
-                                        setCurrentVideoTrackId(trackId)
-                                        e.currentTarget.blur()
-                                    }}
-                                    isActive={trackId === currentVideoTrackId}
-                                />
-                            </React.Fragment>
-                        )
-                    })}
-                </div>
+            <div className={style.topBar}>
+                <h2>
+                    <span className={style.label}>Room Name:</span> /{router.query.room}
+                </h2>
+                <CopyButton copyString={window.location.href} />
             </div>
             <div className={style.videoContainer}>
                 <video ref={ref} id="broadcast-video" />

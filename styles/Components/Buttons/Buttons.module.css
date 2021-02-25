@@ -102,3 +102,42 @@
     cursor: pointer;
     background-color: rgb(8, 105, 143);
 }
+
+.copyButton {
+    background: none;
+    font-size: 1.5rem;
+    margin-left: 0.5rem;
+    border: none;
+    padding: 0;
+    position: relative;
+    color: black;
+    transition: color 4s ease-in;
+}
+.copyButton:hover,
+.copyButton.focus {
+    cursor: pointer;
+    color: rgb(50, 50, 50);
+}
+.copyButton > svg {
+    width: 1rem;
+}
+.copyButton .tooltip {
+    visibility: hidden;
+    font-size: 1rem;
+}
+.copyButton:hover .tooltip,
+.copyButton:focus .tooltip {
+    visibility: visible;
+}
+.copyButton .tooltip .bottom {
+    top: 0;
+    left: 1.5rem;
+}
+.copyButton.isConfirming {
+    color: rgb(0, 240, 0);
+    transition: color 0s ease-out;
+}
+.copyText {
+    position: absolute;
+    top: 100000px;
+}

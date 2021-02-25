@@ -1,8 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import style from '../../styles/Components/Buttons/Buttons.module.css'
 import ReactLoading from 'react-loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faMicrophone, faVideo, faDesktop } from '@fortawesome/free-solid-svg-icons'
+import {
+    faMicrophone,
+    faVideo,
+    faDesktop,
+    faClipboard,
+    faClipboardCheck,
+} from '@fortawesome/free-solid-svg-icons'
 import Tooltip from '../Tooltip'
 
 const Button = ({ handleClick, isStreaming, isLoading, icon, tooltip, id }) => {
@@ -82,4 +88,42 @@ const JoinButton = (props) => (
     </button>
 )
 
-export { AudioButton, VideoButton, ShareButton, PeerConnectionButton, JoinButton }
+const CopyButton = (props) => {
+    const [isConfirming, setIsConfirming] = useState(false)
+    const [isCheckMarkClipboard, setIsCheckmarkClipboard] = useState(false)
+    const { copyString } = props
+
+    function handleClick(e) {
+        let el = document.getElementById(`copy-${copyString}`)
+        el.select()
+        el.setSelectionRange(0, 99999) /* For mobile devices */
+        document.execCommand('copy')
+
+        e.currentTarget.blur()
+        setIsConfirming(true)
+        setIsCheckmarkClipboard(true)
+        setTimeout(() => setIsConfirming(false), 500)
+        setTimeout(() => setIsCheckmarkClipboard(false), 4000)
+    }
+
+    return (
+        <button
+            type="button"
+            className={`${style.copyButton} ${isConfirming && style.isConfirming}`}
+            onClick={handleClick}
+        >
+            <FontAwesomeIcon icon={isCheckMarkClipboard ? faClipboardCheck : faClipboard} />
+            <span className={style.tooltip}>
+                <Tooltip message="Copy Share URL" className={style.bottom} />
+            </span>
+            <input
+                readOnly
+                id={`copy-${copyString}`}
+                className={style.copyText}
+                value={copyString}
+            />
+        </button>
+    )
+}
+
+export { AudioButton, VideoButton, ShareButton, PeerConnectionButton, JoinButton, CopyButton }
