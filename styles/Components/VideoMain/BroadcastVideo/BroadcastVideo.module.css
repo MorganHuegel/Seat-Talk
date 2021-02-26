@@ -1,45 +1,10 @@
-.container {
-    height: calc(100vh - 65px);
-}
-
-.topBar {
-    height: 60px;
-    background-color: rgb(240, 240, 240);
-    border: 2px solid rgb(200, 200, 200);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-}
-.topBar .participantsList {
-    position: absolute;
-    left: 0;
-}
-.topBar .label {
-    color: rgb(100, 100, 100);
-    font-weight: normal;
-    font-size: 1rem;
-}
-.topBar h2 {
-    margin: 0;
-}
-
-.buttonContainer {
-    max-width: 1172px;
-    margin: 0 auto;
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    height: 100%;
-}
-
 .videoContainer {
     background-color: black;
     text-align: center;
 }
 
 .videoContainer video {
-    height: calc(100vh - 128px);
+    height: calc(100vh - 125px);
     background-color: black;
     max-width: 100vw;
 }

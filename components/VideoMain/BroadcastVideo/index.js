@@ -48,19 +48,8 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
     }
 
     return (
-        <div className={style.container}>
-            <div className={style.topBar}>
-                <div className={style.participantsList}>
-                    <ParticipantsListButton allClientsInRoom={allClientsInRoom} />
-                </div>
-                <h2>
-                    <span className={style.label}>Room Name:</span> {router.query.room}
-                </h2>
-                <CopyButton copyString={window.location.href} />
-            </div>
-            <div className={style.videoContainer}>
-                <video ref={ref} id="broadcast-video" />
-            </div>
+        <div className={style.videoContainer}>
+            <video ref={ref} id="broadcast-video" />
         </div>
     )
 })

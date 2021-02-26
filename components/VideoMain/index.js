@@ -1,6 +1,12 @@
 import React from 'react'
 import style from '../../styles/Components/VideoMain/VideoMain.module.css'
-import { AudioButton, VideoButton, ShareButton } from '../Buttons'
+import {
+    AudioButton,
+    VideoButton,
+    ShareButton,
+    ParticipantsListButton,
+    CopyButton,
+} from '../Buttons'
 import OwnVideo from './OwnVideo'
 import BroadcastVideo from './BroadcastVideo'
 
@@ -20,6 +26,7 @@ export default class VideoMain extends React.Component {
             errorMessage: '',
             availableTracks: [],
         }
+
         this.broadcastVideo = React.createRef()
         this.ownVideo = React.createRef()
         this.ownScreenVideo = React.createRef()
@@ -567,6 +574,15 @@ export default class VideoMain extends React.Component {
 
         return (
             <div>
+                <div className={style.topBar}>
+                    <div className={style.participantsList}>
+                        <ParticipantsListButton allClientsInRoom={allClientsInRoom} />
+                    </div>
+                    <h2>
+                        <span className={style.label}>Room Name:</span> {this.props.roomId}
+                    </h2>
+                    <CopyButton copyString={window.location.href} />
+                </div>
                 <BroadcastVideo
                     ref={this.broadcastVideo}
                     allClientsInRoom={allClientsInRoom}
