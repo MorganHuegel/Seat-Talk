@@ -140,17 +140,24 @@ const ParticipantsListButton = (props) => {
         <div className={style.participantsList}>
             <button onClick={handleClick}>
                 Participants ({allClientsInRoom.length})&nbsp;&nbsp;
-                <span className={isExpanded && style.upArrow}>
+                <span className={isExpanded ? style.upArrow : ''}>
                     <FontAwesomeIcon icon={isExpanded ? faSortUp : faSortDown} />
                 </span>
             </button>
-            {isExpanded && (
-                <ul className={style.list}>
-                    {allClientsInRoom.map((client) => (
-                        <li key={client.socket_id}>{client.display_name}</li>
-                    ))}
-                </ul>
-            )}
+            <ul
+                className={`${style.list} ${isExpanded ? style.isExpanded : ''}`}
+                style={{
+                    maxHeight: isExpanded
+                        ? `${
+                              allClientsInRoom.length * 17 + (allClientsInRoom.length - 1) * 14 + 22
+                          }px`
+                        : '0px',
+                }}
+            >
+                {allClientsInRoom.map((client) => (
+                    <li key={client.socket_id}>{client.display_name}</li>
+                ))}
+            </ul>
         </div>
     )
 }
