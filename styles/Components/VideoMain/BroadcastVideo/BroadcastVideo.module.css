@@ -5,11 +5,15 @@
 .topBar {
     height: 60px;
     background-color: rgb(240, 240, 240);
-    border: 1px solid rgb(200, 200, 200);
+    border: 2px solid rgb(200, 200, 200);
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
+}
+.topBar .participantsList {
+    position: absolute;
+    left: 0;
 }
 .topBar .label {
     color: rgb(100, 100, 100);

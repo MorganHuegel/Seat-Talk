@@ -111,7 +111,7 @@
     padding: 0;
     position: relative;
     color: black;
-    transition: color 4s ease-in;
+    transition: color 2s ease-in;
 }
 .copyButton:hover,
 .copyButton.focus {
@@ -134,10 +134,48 @@
     left: 1.5rem;
 }
 .copyButton.isConfirming {
-    color: rgb(0, 240, 0);
+    color: rgb(0, 200, 0);
     transition: color 0s ease-out;
 }
 .copyText {
     position: fixed;
     top: 10000px;
+}
+
+.participantsList button {
+    border: none;
+    background: none;
+    padding: 5px;
+    margin: 0 10px 0 15px;
+    color: rgb(100, 100, 100);
+}
+.participantsList button:hover,
+.participantsList button:focus {
+    cursor: pointer;
+    color: rgb(50, 50, 50);
+}
+.participantsList .upArrow {
+    position: relative;
+    top: 5px;
+}
+.participantsList .list {
+    position: absolute;
+    top: 40px;
+    list-style: none;
+    left: -1px;
+    margin: 0;
+    padding: 0 20px 20px 20px;
+    width: 100%;
+    background-color: rgb(240, 240, 240);
+    border-bottom: 2px solid rgb(200, 200, 200);
+    border-right: 2px solid rgb(200, 200, 200);
+    border-left: 2px solid rgb(200, 200, 200);
+    color: rgb(100, 100, 100);
+    font-size: 14px;
+}
+.participantsList .list li {
+    margin-top: 14px;
+}
+.participantsList .list li:first-child {
+    margin-top: 0;
 }

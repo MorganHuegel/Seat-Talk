@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import style from '../../../styles/Components/VideoMain/BroadcastVideo/BroadcastVideo.module.css'
 import { PeerConnectionButton } from '../../Buttons'
 import { useRouter } from 'next/router'
-import { CopyButton } from '../../Buttons'
+import { CopyButton, ParticipantsListButton } from '../../Buttons'
 
 const BroadcastVideo = React.forwardRef((props, ref) => {
     const router = useRouter()
@@ -50,8 +50,11 @@ const BroadcastVideo = React.forwardRef((props, ref) => {
     return (
         <div className={style.container}>
             <div className={style.topBar}>
+                <div className={style.participantsList}>
+                    <ParticipantsListButton allClientsInRoom={allClientsInRoom} />
+                </div>
                 <h2>
-                    <span className={style.label}>Room Name:</span> /{router.query.room}
+                    <span className={style.label}>Room Name:</span> {router.query.room}
                 </h2>
                 <CopyButton copyString={window.location.href} />
             </div>

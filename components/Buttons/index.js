@@ -8,6 +8,8 @@ import {
     faDesktop,
     faClipboard,
     faClipboardCheck,
+    faSortDown,
+    faSortUp,
 } from '@fortawesome/free-solid-svg-icons'
 import Tooltip from '../Tooltip'
 
@@ -103,7 +105,7 @@ const CopyButton = (props) => {
         setIsConfirming(true)
         setIsCheckmarkClipboard(true)
         setTimeout(() => setIsConfirming(false), 500)
-        setTimeout(() => setIsCheckmarkClipboard(false), 4000)
+        setTimeout(() => setIsCheckmarkClipboard(false), 2000)
     }
 
     return (
@@ -126,4 +128,39 @@ const CopyButton = (props) => {
     )
 }
 
-export { AudioButton, VideoButton, ShareButton, PeerConnectionButton, JoinButton, CopyButton }
+const ParticipantsListButton = (props) => {
+    const { allClientsInRoom } = props
+    const [isExpanded, setIsExpanded] = useState(false)
+
+    function handleClick(e) {
+        setIsExpanded(!isExpanded)
+    }
+
+    return (
+        <div className={style.participantsList}>
+            <button onClick={handleClick}>
+                Participants ({allClientsInRoom.length})&nbsp;&nbsp;
+                <span className={isExpanded && style.upArrow}>
+                    <FontAwesomeIcon icon={isExpanded ? faSortUp : faSortDown} />
+                </span>
+            </button>
+            {isExpanded && (
+                <ul className={style.list}>
+                    {allClientsInRoom.map((client) => (
+                        <li key={client.socket_id}>{client.display_name}</li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    )
+}
+
+export {
+    AudioButton,
+    VideoButton,
+    ShareButton,
+    PeerConnectionButton,
+    JoinButton,
+    CopyButton,
+    ParticipantsListButton,
+}
