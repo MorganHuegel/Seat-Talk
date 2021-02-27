@@ -8,6 +8,7 @@
 }
 
 .videoContainer {
+    position: relative;
     background-color: black;
     display: flex;
     padding: 2px;
@@ -35,4 +36,14 @@
 .emptyRoomMessage p {
     text-align: center;
     margin: 4px 0;
+}
+
+.displayName {
+    background: rgba(255, 255, 255, 0.4);
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    color: white;
+    padding: 4px 10px;
 }
