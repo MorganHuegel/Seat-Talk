@@ -4,7 +4,30 @@ import style from '../../../styles/Components/VideoMain/BroadcastVideo/Broadcast
 
 const Video = (props) => {
     const videoNode = useRef(null)
-    let { client, availableTracks, styles } = props
+    let { client, availableTracks, styles, isScreenShare } = props
+
+    let tracks = availableTracks.filter((t) => {
+        if (isScreenShare) {
+            return t && t.id && t.id === client.screen_video_track_id
+        } else {
+            return t && t.id && [client.audio_track_id, client.video_track_id].includes(t.id)
+        }
+    })
+
+    async function addTracks() {
+        const stream = new MediaStream()
+        tracks.forEach((t) => {
+            stream.addTrack(t)
+        })
+        videoNode.current.srcObject = stream
+        if (videoNode.current.paused) {
+            await videoNode.current.play()
+        }
+    }
+
+    if (videoNode.current && tracks.length) {
+        addTracks()
+    }
 
     return (
         <div className={style.videoContainer} style={styles}>
@@ -34,18 +57,18 @@ const Video = (props) => {
         }
     }, [availableTracks])
 
-    async function addTracks() {
-        const stream = new MediaStream()
-        availableTracks.forEach((t) => {
-            if (t.kind === 'audio' || t.id === currentVideoTrackId) {
-                stream.addTrack(t)
-            }
-        })
-        ref.current.srcObject = stream
-        if (ref.current.paused) {
-            await ref.current.play()
-        }
-    }
+    // async function addTracks() {
+    //     const stream = new MediaStream()
+    //     availableTracks.forEach((t) => {
+    //         if (t.kind === 'audio' || t.id === currentVideoTrackId) {
+    //             stream.addTrack(t)
+    //         }
+    //     })
+    //     ref.current.srcObject = stream
+    //     if (ref.current.paused) {
+    //         await ref.current.play()
+    //     }
+    // }
 
     if (ref.current && availableTracks.length) {
         addTracks()
@@ -61,7 +84,8 @@ const Video = (props) => {
 Video.propTypes = {
     client: PropTypes.object,
     availableTracks: PropTypes.array,
-    clientCount: PropTypes.number,
+    styles: PropTypes.object,
+    isScreenShare: PropTypes.bool,
 }
 
 export default Video
