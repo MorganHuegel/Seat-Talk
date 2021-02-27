@@ -20,6 +20,7 @@
     border: 3px solid green;
     cursor: pointer;
 }
+
 .videoContainer video {
     background: black;
     width: 100%;
@@ -39,11 +40,13 @@
 }
 
 .displayName {
-    background: rgba(255, 255, 255, 0.4);
+    background: rgb(65, 65, 65);
     position: absolute;
     top: 0;
-    left: 0;
     margin: 0;
     color: white;
     padding: 4px 10px;
+}
+.mutedIcon {
+    color: rgb(255, 190, 190);
 }

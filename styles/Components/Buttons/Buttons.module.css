@@ -177,6 +177,7 @@
     transition: max-height 0.15s linear, padding 0s linear 0.15s;
 }
 .participantsList .list.isExpanded {
+    z-index: 1;
     padding: 0 20px 20px 20px;
     transition: max-height 0.15s linear;
 }

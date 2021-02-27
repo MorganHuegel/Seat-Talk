@@ -30,16 +30,34 @@ const BroadcastVideo = (props) => {
     let styles
     if (clientCount <= 1) {
         styles = { width: '100%', height: '100%' }
-    } else if (clientCount <= 2) {
-        styles = { width: '100%', height: '50%' }
-    } else if (clientCount <= 4) {
-        styles = { width: '50%', height: '50%' }
     } else if (windowWidth > 1200) {
-        styles = { width: '25%', height: '33.33%' }
+        if (clientCount === 2) {
+            styles = { width: '50%', height: '100%' }
+        } else if (clientCount === 3) {
+            styles = { width: '33%', height: '100%' }
+        } else if (clientCount === 4) {
+            styles = { width: '50%', height: '50%' }
+        } else if (clientCount <= 8) {
+            styles = { width: '25%', height: '50%' }
+        } else {
+            styles = { width: '25%', height: '33.33%' }
+        }
     } else if (windowWidth > 900) {
-        styles = { width: '33.33%', height: '33.33%' }
+        if (clientCount === 2) {
+            styles = { width: '50%', height: '100%' }
+        } else if (clientCount <= 4) {
+            styles = { width: '50%', height: '50%' }
+        } else {
+            styles = { width: '50%', height: '33.33%' }
+        }
     } else {
-        styles = { width: '50%', height: '33.33%' }
+        if (clientCount === 2) {
+            styles = { width: '100%', height: '50%' }
+        } else if (clientCount <= 4) {
+            styles = { width: '50%', height: '50%' }
+        } else {
+            styles = { width: '50%', height: '33.33%' }
+        }
     }
 
     return (

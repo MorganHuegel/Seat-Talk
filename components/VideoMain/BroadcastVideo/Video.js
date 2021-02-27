@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import PropTypes from 'prop-types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMicrophoneAltSlash } from '@fortawesome/free-solid-svg-icons'
 import style from '../../../styles/Components/VideoMain/BroadcastVideo/BroadcastVideo.module.css'
 
 const Video = (props) => {
@@ -43,10 +45,18 @@ const Video = (props) => {
         })
     }
 
+    let isMuted = !isScreenShare && !tracks.find((t) => t.kind === 'audio')
+
     return (
         <div className={style.videoContainer} style={styles}>
             <p className={style.displayName}>
                 {isScreenShare ? client.display_name + "'s Screen" : client.display_name}
+                {isMuted && (
+                    <span className={style.mutedIcon}>
+                        &nbsp;
+                        <FontAwesomeIcon icon={faMicrophoneAltSlash} />
+                    </span>
+                )}
             </p>
             <video ref={videoNode} />
         </div>
