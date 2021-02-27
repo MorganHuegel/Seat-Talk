@@ -22,7 +22,11 @@ const BroadcastVideo = (props) => {
         return () => window.removeEventListener('resize', handleResize)
     })
 
-    let clientCount = otherClientsInRoom.length
+    let clientCount = otherClientsInRoom.reduce(
+        (acc, client) => (client.screen_video_track_id ? acc + 2 : acc + 1),
+        0
+    )
+
     let styles
     if (clientCount <= 1) {
         styles = { width: '100%', height: '100%' }
