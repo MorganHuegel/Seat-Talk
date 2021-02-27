@@ -33,6 +33,8 @@ const BroadcastVideo = (props) => {
     })
 
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+    const [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
+
     useEffect(() => {
         function handleResize(e) {
             let newWidth = e.currentTarget.innerWidth
@@ -48,6 +50,10 @@ const BroadcastVideo = (props) => {
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
     })
+
+    function handleClickVideo(trackId) {
+        setCurrentVideoTrackId(trackId)
+    }
 
     let clientCount = otherClientsInRoom.reduce(
         (acc, client) => (client.screen_video_track_id ? acc + 2 : acc + 1),
@@ -87,27 +93,60 @@ const BroadcastVideo = (props) => {
         }
     }
 
+    let fullScreenVideo
+    let fullScreenClient = otherClientsInRoom.find((c) =>
+        [c.screen_video_track_id, c.video_track_id].includes(currentVideoTrackId)
+    )
+    if (currentVideoTrackId && fullScreenClient) {
+        let isScreenShare = fullScreenClient.screen_video_track_id === currentVideoTrackId
+        fullScreenVideo = (
+            <Video
+                client={fullScreenClient}
+                availableTracks={availableTracks}
+                styles={{ width: '100%', height: '100%' }}
+                key={'fullscreen' + fullScreenClient.socket_id}
+                handleClick={() => handleClickVideo(null)}
+                isScreenShare={isScreenShare}
+            />
+        )
+    }
+
     return (
         <div className={style.broadcastVideoContainer}>
+            {fullScreenVideo}
             {otherClientsInRoom.length > 0 ? (
                 otherClientsInRoom.map((c) =>
                     c.screen_video_track_id ? (
                         <Fragment key={c.socket_id}>
+                            {(!currentVideoTrackId ||
+                                currentVideoTrackId !== c.screen_video_track_id) && (
+                                <Video
+                                    client={c}
+                                    availableTracks={availableTracks}
+                                    styles={styles}
+                                    isScreenShare
+                                    handleClick={() => handleClickVideo(c.screen_video_track_id)}
+                                />
+                            )}
+                            {(!currentVideoTrackId || currentVideoTrackId !== c.video_track_id) && (
+                                <Video
+                                    client={c}
+                                    availableTracks={availableTracks}
+                                    styles={styles}
+                                    handleClick={() => handleClickVideo(c.video_track_id)}
+                                />
+                            )}
+                        </Fragment>
+                    ) : (
+                        (!currentVideoTrackId || currentVideoTrackId !== c.video_track_id) && (
                             <Video
                                 client={c}
                                 availableTracks={availableTracks}
                                 styles={styles}
-                                isScreenShare
+                                key={c.socket_id}
+                                handleClick={() => handleClickVideo(c.video_track_id)}
                             />
-                            <Video client={c} availableTracks={availableTracks} styles={styles} />
-                        </Fragment>
-                    ) : (
-                        <Video
-                            client={c}
-                            availableTracks={availableTracks}
-                            styles={styles}
-                            key={c.socket_id}
-                        />
+                        )
                     )
                 )
             ) : (

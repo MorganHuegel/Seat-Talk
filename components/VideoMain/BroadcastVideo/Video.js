@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMicrophoneAltSlash } from '@fortawesome/free-solid-svg-icons'
@@ -7,15 +7,23 @@ import style from '../../../styles/Components/VideoMain/BroadcastVideo/Broadcast
 
 const Video = (props) => {
     const videoNode = useRef(null)
-    let { client, availableTracks, styles, isScreenShare } = props
+    let { client, availableTracks, styles, isScreenShare, handleClick } = props
+    let [tracks, setTracks] = useState([])
 
-    let tracks = availableTracks.filter((t) => {
-        if (isScreenShare) {
-            return t && t.id && t.id === client.screen_video_track_id
-        } else {
-            return t && t.id && [client.audio_track_id, client.video_track_id].includes(t.id)
-        }
-    })
+    function setFilteredTracks() {
+        let tracks = availableTracks.filter((t) => {
+            if (isScreenShare) {
+                return t && t.id && t.id === client.screen_video_track_id
+            } else {
+                return t && t.id && [client.audio_track_id, client.video_track_id].includes(t.id)
+            }
+        })
+        setTracks(tracks)
+    }
+
+    useEffect(() => {
+        setFilteredTracks()
+    }, [availableTracks])
 
     async function addTracks() {
         const stream = new MediaStream()
@@ -50,7 +58,11 @@ const Video = (props) => {
     let isNoVideo = !isScreenShare && !tracks.find((t) => t.kind === 'video')
 
     return (
-        <div className={style.videoContainer} style={styles}>
+        <div
+            className={`${style.videoContainer} ${isNoVideo ? '' : style.clickable}`}
+            style={styles}
+            onClick={handleClick}
+        >
             <p className={style.displayName}>
                 {isScreenShare ? client.display_name + "'s Screen" : client.display_name}
                 {isMuted && (

@@ -16,7 +16,7 @@
     align-items: center;
     border: 3px solid black;
 }
-.videoContainer:hover {
+.videoContainer.clickable:hover {
     border: 3px solid green;
     cursor: pointer;
 }
