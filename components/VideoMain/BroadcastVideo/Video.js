@@ -29,6 +29,20 @@ const Video = (props) => {
         addTracks()
     }
 
+    if (
+        videoNode.current &&
+        videoNode.current.srcObject &&
+        videoNode.current.srcObject.getTracks().length > tracks.length
+    ) {
+        let currTracks = videoNode.current.srcObject.getTracks()
+        currTracks.forEach((currTr) => {
+            if (!tracks.find((tr) => tr.id === currTr.id)) {
+                currTr.stop()
+                videoNode.current.srcObject.removeTrack(currTr)
+            }
+        })
+    }
+
     return (
         <div className={style.videoContainer} style={styles}>
             <video ref={videoNode} />
