@@ -1,57 +1,48 @@
 import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
 import style from '../../../styles/Components/VideoMain/BroadcastVideo/BroadcastVideo.module.css'
-import { PeerConnectionButton } from '../../Buttons'
-import { useRouter } from 'next/router'
-import { CopyButton, ParticipantsListButton } from '../../Buttons'
+import Video from './Video'
 
-const BroadcastVideo = React.forwardRef((props, ref) => {
-    const router = useRouter()
-    let { allClientsInRoom, availableTracks } = props
-    let [currentVideoTrackId, setCurrentVideoTrackId] = useState(null)
+const BroadcastVideo = (props) => {
+    const { otherClientsInRoom, availableTracks } = props
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
-    useEffect(() => {
-        // remove tracks that are no longer available
-        if (!availableTracks.length) {
-            ref.current.srcObject = null
-        }
-        let stream = ref.current.srcObject
-        if (stream) {
-            stream.getTracks().forEach((track) => {
-                if (!availableTracks.some((t) => t.id === track.id)) {
-                    track.stop()
-                    stream.removeTrack(track)
-                }
-            })
-        }
-
-        if (!currentVideoTrackId || !availableTracks.find((t) => t.id === currentVideoTrackId)) {
-            let videoTrack = availableTracks.find((t) => t.kind === 'video')
-            setCurrentVideoTrackId(videoTrack ? videoTrack.id : null)
-        }
-    }, [availableTracks])
-
-    async function addTracks() {
-        const stream = new MediaStream()
-        availableTracks.forEach((t) => {
-            if (t.kind === 'audio' || t.id === currentVideoTrackId) {
-                stream.addTrack(t)
-            }
-        })
-        ref.current.srcObject = stream
-        if (ref.current.paused) {
-            await ref.current.play()
-        }
-    }
-
-    if (ref.current && availableTracks.length) {
-        addTracks()
+    let clientCount = otherClientsInRoom.length
+    let styles
+    if (clientCount <= 1) {
+        styles = { width: '100%', height: '100%' }
+    } else if (clientCount <= 2) {
+        styles = { width: '100%', height: '50%' }
+    } else if (clientCount <= 4) {
+        styles = { width: '50%', height: '50%' }
+    } else {
+        styles = { width: '50%', height: '33.33%' }
     }
 
     return (
-        <div className={style.videoContainer}>
-            <video ref={ref} id="broadcast-video" />
+        <div className={style.broadcastVideoContainer}>
+            {otherClientsInRoom.length > 0 ? (
+                otherClientsInRoom.map((c) => (
+                    <Video
+                        client={c}
+                        availableTracks={availableTracks}
+                        styles={styles}
+                        key={c.socket_id}
+                    />
+                ))
+            ) : (
+                <div className={style.emptyRoomMessage}>
+                    <p>Share this url for other people to join:</p>
+                    <p>{window.location.href}</p>
+                </div>
+            )}
         </div>
     )
-})
+}
+
+BroadcastVideo.propTypes = {
+    otherClientsInRoom: PropTypes.array,
+    availableTracks: PropTypes.array,
+}
 
 export default BroadcastVideo

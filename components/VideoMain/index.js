@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import style from '../../styles/Components/VideoMain/VideoMain.module.css'
 import {
     AudioButton,
@@ -11,6 +12,11 @@ import OwnVideo from './OwnVideo'
 import BroadcastVideo from './BroadcastVideo'
 
 export default class VideoMain extends React.Component {
+    static propTypes = {
+        allClientsInRoom: PropTypes.array,
+        socket: PropTypes.object,
+    }
+
     constructor(props) {
         super(props)
         this.state = {
@@ -27,7 +33,6 @@ export default class VideoMain extends React.Component {
             availableTracks: [],
         }
 
-        this.broadcastVideo = React.createRef()
         this.ownVideo = React.createRef()
         this.ownScreenVideo = React.createRef()
         this.peerConnections = {}
@@ -570,7 +575,10 @@ export default class VideoMain extends React.Component {
             errorMessage,
             availableTracks,
         } = this.state
-        const { allClientsInRoom } = this.props
+        const {
+            allClientsInRoom,
+            socket: { id },
+        } = this.props
 
         return (
             <div>
@@ -584,8 +592,7 @@ export default class VideoMain extends React.Component {
                     <CopyButton copyString={window.location.href} />
                 </div>
                 <BroadcastVideo
-                    ref={this.broadcastVideo}
-                    allClientsInRoom={allClientsInRoom}
+                    otherClientsInRoom={allClientsInRoom.filter((c) => c.socket_id !== id)}
                     availableTracks={availableTracks}
                 />
                 <OwnVideo ref={this.ownVideo} />
