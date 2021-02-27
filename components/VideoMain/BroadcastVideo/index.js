@@ -5,6 +5,33 @@ import Video from './Video'
 
 const BroadcastVideo = (props) => {
     const { otherClientsInRoom, availableTracks } = props
+    otherClientsInRoom.sort((a, b) => {
+        // shared screen goes at the top
+        if (b.screen_video_track_id && !a.screen_video_track_id) {
+            return 1
+        } else if (!b.screen_video_track_id && a.screen_video_track_id) {
+            return -1
+        } else {
+            // video sharing comes next
+            if (b.video_track_id && !a.video_track_id) {
+                return 1
+            } else if (!b.video_track_id && a.video_track_id) {
+                return -1
+            } else {
+                // audio sharing comes next
+                if (b.audio_track_id && !a.audio_track_id) {
+                    return 1
+                } else if (!b.audio_track_id && a.audio_track_id) {
+                    return -1
+                }
+                // finally, just sort by id (order joined)
+                else {
+                    return a.id - b.id
+                }
+            }
+        }
+    })
+
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     useEffect(() => {
         function handleResize(e) {
@@ -66,13 +93,13 @@ const BroadcastVideo = (props) => {
                 otherClientsInRoom.map((c) =>
                     c.screen_video_track_id ? (
                         <Fragment key={c.socket_id}>
-                            <Video client={c} availableTracks={availableTracks} styles={styles} />
                             <Video
                                 client={c}
                                 availableTracks={availableTracks}
                                 styles={styles}
                                 isScreenShare
                             />
+                            <Video client={c} availableTracks={availableTracks} styles={styles} />
                         </Fragment>
                     ) : (
                         <Video
