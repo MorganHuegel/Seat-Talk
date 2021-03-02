@@ -31,6 +31,10 @@ CREATE TABLE clients(
   screen_video_track_id VARCHAR,
   screen_audio_track_id VARCHAR,
   joined_at timestamptz default now(),
+  did_share_audio boolean default false,
+  did_share_video boolean default false,
+  did_share_screen_audio boolean default false,
+  did_share_screen_video boolean default false,
   disconnected_at timestamptz
 );
 

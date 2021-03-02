@@ -139,18 +139,23 @@ async function handleUpdateSharing(socket, io, clientData, roomId) {
             screen_audio_track_id,
             screen_video_track_id,
         } = clientData
+
+        let updateObj = {
+            audio_track_id,
+            video_track_id,
+            screen_audio_track_id,
+            screen_video_track_id,
+        }
+        if (audio_track_id) updateObj.did_share_audio = true
+        if (video_track_id) updateObj.did_share_video = true
+        if (screen_audio_track_id) updateObj.did_share_screen_audio = true
+        if (screen_video_track_id) updateObj.did_share_screen_video = true
+
         const updatedUser = await knex('clients')
             .where({ id: client_pk })
-            .update({
-                audio_track_id,
-                video_track_id,
-                screen_audio_track_id,
-                screen_video_track_id,
-            })
+            .update(updateObj)
             .returning('*')
 
-        // socket.emit('updateSharing', { updatedUser: updatedUser[0] })
-        // io.emit('updateSharing', { updatedUser: updatedUser[0] })
         io.to(roomId).emit('updateSharing', { updatedUser: updatedUser[0] })
     } catch (error) {
         _handleErrors(socket, error, 'handleUpdateSharing')

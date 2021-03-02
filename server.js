@@ -41,7 +41,16 @@ io.on('connect', (socket) => {
         handleAddedPeerConnectionTrack(socket, io, trackId, clients)
     )
     socket.on('renegotiate', ({ toSocketId }) => handleRenegotiate(socket, io, toSocketId))
-    socket.on('disconnect', () => handleDisconnect(socket, io))
+    socket.on('disconnect', (reason) => {
+        if (reason) {
+            console.log(
+                `socket with ID ${
+                    socket.id
+                } disconnected at ${new Date().toLocaleString()} because of "${reason}."`
+            )
+        }
+        handleDisconnect(socket, io)
+    })
 })
 
 // Next setup
