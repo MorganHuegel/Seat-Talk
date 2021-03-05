@@ -13,14 +13,14 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Tooltip from '../Tooltip'
 
-const Button = ({ handleClick, isStreaming, isLoading, icon, tooltip, id }) => {
+const Button = ({ handleClick, isStreaming, isLoading, isDisabled, icon, tooltip, id }) => {
     return (
         <button
             type="button"
             onClick={handleClick}
             className={`${style.button} ${isStreaming && style.isStreaming}`}
             id={id}
-            disabled={isLoading}
+            disabled={isDisabled}
         >
             {!isStreaming && !isLoading && (
                 <span className={style.slash}>

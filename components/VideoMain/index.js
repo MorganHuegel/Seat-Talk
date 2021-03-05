@@ -580,6 +580,8 @@ export default class VideoMain extends React.Component {
             socket: { id },
         } = this.props
 
+        const isDisabled = is_audio_loading || is_video_loading || is_screen_share_loading
+
         return (
             <div>
                 <div className={style.topBar}>
@@ -603,11 +605,13 @@ export default class VideoMain extends React.Component {
                         handleClick={this.handleClickAudio}
                         isStreaming={!!audio_track_id}
                         isLoading={is_audio_loading}
+                        isDisabled={isDisabled}
                     />
                     <VideoButton
                         handleClick={this.handleClickVideo}
                         isStreaming={!!video_track_id}
                         isLoading={is_video_loading}
+                        isDisabled={isDisabled}
                     />
                     {!/iphone|ipod|android|blackberry|mini|windows\sce|palm/i.test(
                         navigator.userAgent.toLowerCase()
@@ -616,6 +620,7 @@ export default class VideoMain extends React.Component {
                             handleClick={this.handleClickShareScreen}
                             isStreaming={!!screen_video_track_id}
                             isLoading={is_screen_share_loading}
+                            isDisabled={isDisabled}
                         />
                     )}
                 </div>
