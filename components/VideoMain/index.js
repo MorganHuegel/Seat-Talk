@@ -609,11 +609,15 @@ export default class VideoMain extends React.Component {
                         isStreaming={!!video_track_id}
                         isLoading={is_video_loading}
                     />
-                    <ShareButton
-                        handleClick={this.handleClickShareScreen}
-                        isStreaming={!!screen_video_track_id}
-                        isLoading={is_screen_share_loading}
-                    />
+                    {!/iphone|ipod|android|blackberry|mini|windows\sce|palm/i.test(
+                        navigator.userAgent.toLowerCase()
+                    ) && (
+                        <ShareButton
+                            handleClick={this.handleClickShareScreen}
+                            isStreaming={!!screen_video_track_id}
+                            isLoading={is_screen_share_loading}
+                        />
+                    )}
                 </div>
             </div>
         )
