@@ -1,7 +1,8 @@
 const { knex } = require('../../database/connectToDb')
+const { Log } = require('../Logger')
 
 function _handleErrors(socket, err, functionName) {
-    console.log(`ERROR in ${functionName}: ${err}`)
+    Log(`ERROR in ${functionName}: ${err}`)
     socket.emit('error', { errorMessage: err.message })
 }
 
@@ -16,6 +17,7 @@ async function _getAllClientsInRoom(room_pk) {
 async function handleConnect(socket, io) {
     try {
         const socket_id = socket.id
+        Log(`Socket connected with socket id of: ${socket_id}`)
         const existing = await knex
             .select()
             .table('clients')

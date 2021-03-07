@@ -17,6 +17,7 @@ const {
     handleAddedPeerConnectionTrack,
     handleRenegotiate,
 } = require('./helpers/socket')
+const { Log } = require('./helpers/Logger')
 io.on('connect', (socket) => {
     handleConnect(socket, io)
     socket.on('joinRoom', ({ roomId, clientDatabaseId, displayName }) =>
@@ -43,11 +44,7 @@ io.on('connect', (socket) => {
     socket.on('renegotiate', ({ toSocketId }) => handleRenegotiate(socket, io, toSocketId))
     socket.on('disconnect', (reason) => {
         if (reason) {
-            console.log(
-                `socket with ID ${
-                    socket.id
-                } disconnected at ${new Date().toLocaleString()} because of "${reason}."`
-            )
+            Log(`socket with ID ${socket.id} disconnected at because of "${reason}."`)
         }
         handleDisconnect(socket, io)
     })
@@ -69,6 +66,6 @@ nextApp.prepare().then(() => {
         if (err) {
             throw err
         }
-        console.log('listening on http://localhost:' + port)
+        Log('listening on http://localhost:' + port)
     })
 })

@@ -8,6 +8,7 @@ CREATE DATABASE seattalk;
 DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS room_clients;
 DROP TABLE IF EXISTS clients;
+DROP TABLE IF EXISTS logs;
 
 CREATE TABLE rooms(
     id serial PRIMARY KEY, 
@@ -36,6 +37,11 @@ CREATE TABLE clients(
   did_share_screen_audio boolean default false,
   did_share_screen_video boolean default false,
   disconnected_at timestamptz
+);
+CREATE TABLE logs(
+  id serial PRIMARY KEY,
+  log_message VARCHAR,
+  created_at timestamptz default now()
 );
 
 INSERT INTO rooms(room_id, opened_at, closed_at)
