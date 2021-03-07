@@ -37,18 +37,20 @@ const OwnVideo = React.forwardRef((props, ref) => {
                         </span>
                     )}
                 </div>
-                {/* {!video_track_id && (
-                    <div className={`${style.windowSize} ${style.avatarContainer}`}>
-                        <span
-                            className={`${style.noVideoAvatar} ${
-                                !audio_track_id ? style.muted : ''
-                            }`}
-                        >
-                            <Image src="/favicon.ico" width="100%" height="100%" />
-                        </span>
-                    </div>
-                )} */}
-                <video ref={ref} id="own-video" muted playsInline className={style.windowSize} />
+                <div className={style.windowSize}>
+                    {!video_track_id && (
+                        <div className={style.avatarContainer}>
+                            <span
+                                className={`${style.noVideoAvatar} ${
+                                    !audio_track_id ? style.muted : ''
+                                }`}
+                            >
+                                <Image src="/favicon.ico" width="100%" height="100%" />
+                            </span>
+                        </div>
+                    )}
+                    <video ref={ref} id="own-video" muted playsInline />
+                </div>
             </div>
         </div>
     )
