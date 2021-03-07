@@ -581,6 +581,10 @@ export default class VideoMain extends React.Component {
         } = this.props
 
         const isDisabled = is_audio_loading || is_video_loading || is_screen_share_loading
+        let ownDisplayName =
+            allClientsInRoom &&
+            allClientsInRoom.some((c) => c.socket_id === id) &&
+            allClientsInRoom.find((c) => c.socket_id === id).display_name
 
         return (
             <div>
@@ -597,7 +601,12 @@ export default class VideoMain extends React.Component {
                     otherClientsInRoom={allClientsInRoom.filter((c) => c.socket_id !== id)}
                     availableTracks={availableTracks}
                 />
-                <OwnVideo ref={this.ownVideo} />
+                <OwnVideo
+                    ref={this.ownVideo}
+                    audio_track_id={audio_track_id}
+                    video_track_id={video_track_id}
+                    display_name={ownDisplayName}
+                />
                 <video ref={this.ownScreenVideo} style={{ display: 'none' }} />
                 {errorMessage && <p>{errorMessage}</p>}
                 <div className={style.buttonContainer}>

@@ -1,7 +1,9 @@
 /* BUTTON */
-.button {
+.button,
+.button:disabled {
     border-radius: 50%;
     background-color: rgb(255, 190, 189);
+    border: 1px solid white;
     width: 45px;
     height: 45px;
     margin: 0 12px;
@@ -9,20 +11,29 @@
     outline: none;
     color: white;
 }
-.button:hover,
-.button:focus {
+.button:hover:enabled,
+.button:focus:enabled {
     cursor: pointer;
     background-color: rgb(255, 170, 169);
 }
-.button.isStreaming {
-    border: 2px solid white;
+.button.isStreaming,
+.button.isStreaming:disabled {
     background-color: white;
     padding: 0px;
     color: black;
+    border: 1px solid black;
 }
-.button.isStreaming:hover,
-.button.isStreaming:focus {
+.button.isStreaming:enabled:hover,
+.button.isStreaming:enabled:focus {
     background-color: rgb(230, 230, 230);
+}
+.button:disabled,
+.buttondisabled:hover,
+.button:disabled:focus,
+.button.isStreaming:disabled,
+.button.isStreamingdisabled:hover,
+.button.isStreaming:disabled:focus {
+    cursor: not-allowed;
 }
 
 /* TOOLTIP */
