@@ -42,6 +42,9 @@ io.on('connect', (socket) => {
         handleAddedPeerConnectionTrack(socket, io, trackId, clients)
     )
     socket.on('renegotiate', ({ toSocketId }) => handleRenegotiate(socket, io, toSocketId))
+    socket.on('connect_error', (err) => {
+        Log(`socket with ID ${socket.id} has connect_error: "${err.message}."`)
+    })
     socket.on('disconnect', (reason) => {
         if (reason) {
             Log(`socket with ID ${socket.id} disconnected at because of "${reason}."`)
