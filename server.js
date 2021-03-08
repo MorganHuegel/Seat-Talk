@@ -45,9 +45,12 @@ io.on('connect', (socket) => {
     socket.on('connect_error', (err) => {
         Log(`socket with ID ${socket.id} has connect_error: "${err.message}."`)
     })
+    socket.on('heartbeatHeroku', () => {
+        Log(`socket with ID ${socket.id} preventing Heroku from sleeping`)
+    })
     socket.on('disconnect', (reason) => {
         if (reason) {
-            Log(`socket with ID ${socket.id} disconnected at because of "${reason}."`)
+            Log(`socket with ID ${socket.id} disconnected because of "${reason}."`)
         }
         handleDisconnect(socket, io)
     })
@@ -69,6 +72,6 @@ nextApp.prepare().then(() => {
         if (err) {
             throw err
         }
-        Log('listening on http://localhost:' + port)
+        Log('listening on port ' + port)
     })
 })

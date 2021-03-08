@@ -14,6 +14,7 @@ class Room extends React.Component {
             clientDatabaseId: null,
         }
         this.socket = null
+        this.heartbeatHeroku = null
     }
 
     componentDidMount() {
@@ -53,10 +54,18 @@ class Room extends React.Component {
             })
         })
 
+        // Every 5 minutes, ping the server to keep dynos from falling asleep.
+        // Free Heroku plan has dynos go to sleep after 30 minutes of inactivity,
+        // causing reconnection bug.
+        this.heartbeatHeroku = setInterval(() => {
+            this.socket.emit('heartbeatHeroku')
+        }, 1000 * 60 * 5)
+
         this.setState({ isLoading: false })
     }
 
     componentWillUnmount() {
+        clearInterval(this.heartbeatHeroku)
         this.socket.close()
     }
 
