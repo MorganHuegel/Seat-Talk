@@ -125,7 +125,7 @@ const BroadcastVideo = (props) => {
             <Video
                 client={fullScreenClient}
                 styles={{ width: '100%', height: '100%' }}
-                key={'fullscreen' + fullScreenClient.socket_id}
+                key={'fullscreen' + currentVideoTrackId}
                 handleClick={() => handleClickVideo(null)}
                 isScreenShare={isScreenShare}
             />
