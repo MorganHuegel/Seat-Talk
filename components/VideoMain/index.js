@@ -45,6 +45,7 @@ export default class VideoMain extends React.Component {
         this.ownVideo = React.createRef()
         this.ownScreenVideo = React.createRef()
         this.peerConnections = {}
+        this.unexpectedTracks = {}
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -119,6 +120,28 @@ export default class VideoMain extends React.Component {
                     newPcTrackMap.screenTrack = clientToggledTrack.screen_video_track_id
                         ? newPcTrackMap.screenTrack
                         : null
+                }
+
+                // final check to see if track is sitting in waiting room already
+                if (this.unexpectedTracks[clientToggledTrack.socket_id]) {
+                    let newTrack = this.unexpectedTracks[clientToggledTrack.socket_id]
+                    if (newPcTrackMap.isExpectingAudio && newTrack.kind === 'audio') {
+                        newPcTrackMap.isExpectingAudio = false
+                        newPcTrackMap.audioTrack = newTrack
+                    } else if (newPcTrackMap.isExpectingVideo && newTrack.kind === 'video') {
+                        newPcTrackMap.isExpectingVideo = false
+                        newPcTrackMap.videoTrack = newTrack
+                    } else if (newPcTrackMap.isExpectingScreen && newTrack.kind === 'video') {
+                        newPcTrackMap.isExpectingScreen = false
+                        newPcTrackMap.screenTrack = newTrack
+                    } else {
+                        console.error(
+                            'Found track in unexpectedTracks for ' +
+                                clientToggledTrack.display_name +
+                                ', but could not add it to track mapper.'
+                        )
+                    }
+                    this.unexpectedTracks[clientToggledTrack.socket_id] = null
                 }
 
                 const peerConnectionTrackMapper = { ...this.state.peerConnectionTrackMapper }
@@ -284,11 +307,15 @@ export default class VideoMain extends React.Component {
                 pcMapper.isExpectingScreen = false
             } else {
                 console.error(
-                    `ontrack fired before allClientsInRoom was updated.
-                    Gotta fix this timing issue! 
-                    event.track: ${event.track}
-                    pcMapper: ${pcMapper}`
+                    'ontrack fired before allClientsInRoom was updated. ' +
+                        'Saving track in unexpectedTracks for when it does update.\n' +
+                        'event.track: ' +
+                        event.track +
+                        '\n' +
+                        'pcMapper: ' +
+                        pcMapper
                 )
+                this.unexpectedTracks[peerSocketId] = newTrack
             }
             let peerConnectionTrackMapper = { ...this.state.peerConnectionTrackMapper }
             peerConnectionTrackMapper[peerSocketId] = pcMapper
