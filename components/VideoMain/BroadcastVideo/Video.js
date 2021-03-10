@@ -24,7 +24,13 @@ const Video = (props) => {
         })
         videoNode.current.srcObject = stream
         if (videoNode.current.paused) {
-            await videoNode.current.play()
+            try {
+                await videoNode.current.play()
+            } catch (e) {
+                if (!(e instanceof DOMException)) {
+                    console.error(e)
+                }
+            }
         }
     }
 

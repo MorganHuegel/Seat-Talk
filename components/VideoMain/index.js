@@ -98,19 +98,45 @@ export default class VideoMain extends React.Component {
                       }
                     : { ...initializeMapper }
 
-                const isToggledOn =
-                    (!prevClient.video_track_id && clientToggledTrack.video_track_id) ||
-                    (!prevClient.audio_track_id && clientToggledTrack.audio_track_id) ||
-                    (!prevClient.screen_video_track_id && clientToggledTrack.screen_video_track_id)
+                const isToggledOff =
+                    (prevClient.video_track_id && !clientToggledTrack.video_track_id) ||
+                    (prevClient.audio_track_id && !clientToggledTrack.audio_track_id) ||
+                    (prevClient.screen_video_track_id && !clientToggledTrack.screen_video_track_id)
 
+                /* Expecting new audio track when:
+                      1. audio toggled off to on
+                      2. audio is already on and video toggled off to on (restarts userMedia)
+                      3. audio is already on and video toggled on to off (restarts userMedia)
+                */
                 newPcTrackMap.isExpectingAudio =
-                    !prevClient.audio_track_id && !!clientToggledTrack.audio_track_id
+                    (!prevClient.audio_track_id && !!clientToggledTrack.audio_track_id) ||
+                    (!!prevClient.audio_track_id &&
+                        !prevClient.video_track_id &&
+                        !!clientToggledTrack.audio_track_id &&
+                        !!clientToggledTrack.video_track_id) ||
+                    (!!prevClient.audio_track_id &&
+                        !!prevClient.video_track_id &&
+                        !!clientToggledTrack.audio_track_id &&
+                        !clientToggledTrack.video_track_id)
+
+                /* Expecting new video track when:
+                      1. video toggled off to on
+                      2. video is already on and audio toggled off to on (restart userMedia)
+                */
                 newPcTrackMap.isExpectingVideo =
-                    !prevClient.video_track_id && !!clientToggledTrack.video_track_id
+                    (!prevClient.video_track_id && !!clientToggledTrack.video_track_id) ||
+                    (!!prevClient.video_track_id &&
+                        !prevClient.audio_track_id &&
+                        !!clientToggledTrack.audio_track_id &&
+                        !!clientToggledTrack.video_track_id)
+
+                /* Expecting new video track when:
+                      1. screen share toggled off to on
+                */
                 newPcTrackMap.isExpectingScreen =
                     !prevClient.screen_video_track_id && !!clientToggledTrack.screen_video_track_id
 
-                if (!isToggledOn) {
+                if (isToggledOff) {
                     newPcTrackMap.audioTrack = clientToggledTrack.audio_track_id
                         ? newPcTrackMap.audioTrack
                         : null
@@ -123,25 +149,54 @@ export default class VideoMain extends React.Component {
                 }
 
                 // final check to see if track is sitting in waiting room already
-                if (this.unexpectedTracks[clientToggledTrack.socket_id]) {
-                    let newTrack = this.unexpectedTracks[clientToggledTrack.socket_id]
-                    if (newPcTrackMap.isExpectingAudio && newTrack.kind === 'audio') {
+                let unexpectedTracks = this.unexpectedTracks[clientToggledTrack.socket_id]
+                if (
+                    unexpectedTracks &&
+                    (unexpectedTracks.audioTrack || unexpectedTracks.videoTrack)
+                ) {
+                    if (
+                        newPcTrackMap.isExpectingAudio &&
+                        unexpectedTracks &&
+                        unexpectedTracks.audioTrack
+                    ) {
                         newPcTrackMap.isExpectingAudio = false
-                        newPcTrackMap.audioTrack = newTrack
-                    } else if (newPcTrackMap.isExpectingVideo && newTrack.kind === 'video') {
+                        newPcTrackMap.audioTrack = unexpectedTracks.audioTrack
+                        this.unexpectedTracks[clientToggledTrack.socket_id].audioTrack = null
+                    }
+
+                    if (
+                        newPcTrackMap.isExpectingVideo &&
+                        unexpectedTracks &&
+                        unexpectedTracks.videoTrack
+                    ) {
                         newPcTrackMap.isExpectingVideo = false
-                        newPcTrackMap.videoTrack = newTrack
-                    } else if (newPcTrackMap.isExpectingScreen && newTrack.kind === 'video') {
+                        newPcTrackMap.videoTrack = unexpectedTracks.videoTrack
+                        this.unexpectedTracks[clientToggledTrack.socket_id].videoTrack = null
+                    } else if (
+                        newPcTrackMap.isExpectingScreen &&
+                        unexpectedTracks &&
+                        unexpectedTracks.videoTrack
+                    ) {
                         newPcTrackMap.isExpectingScreen = false
-                        newPcTrackMap.screenTrack = newTrack
-                    } else {
+                        newPcTrackMap.screenTrack = unexpectedTracks.videoTrack
+                        this.unexpectedTracks[clientToggledTrack.socket_id].videoTrack = null
+                    }
+
+                    if (
+                        !newPcTrackMap.audioTrack &&
+                        !newPcTrackMap.videoTrack &&
+                        !newPcTrackMap.screenTrack
+                    ) {
                         console.error(
                             'Found track in unexpectedTracks for ' +
                                 clientToggledTrack.display_name +
                                 ', but could not add it to track mapper.'
                         )
+                        this.unexpectedTracks[clientToggledTrack.socket_id] = {
+                            audioTrack: null,
+                            videoTrack: null,
+                        }
                     }
-                    this.unexpectedTracks[clientToggledTrack.socket_id] = null
                 }
 
                 const peerConnectionTrackMapper = { ...this.state.peerConnectionTrackMapper }
@@ -286,7 +341,6 @@ export default class VideoMain extends React.Component {
 
             // maybe we can discern which track it is by allClientsInRoom
             let clientData = this.props.allClientsInRoom.find((c) => c.socket_id === peerSocketId)
-
             if (
                 (pcMapper.isExpectingAudio && newTrack.kind === 'audio') ||
                 newTrack.id === clientData.audio_track_id
@@ -315,8 +369,21 @@ export default class VideoMain extends React.Component {
                         'pcMapper: ' +
                         pcMapper
                 )
-                this.unexpectedTracks[peerSocketId] = newTrack
+                let audioTrack =
+                    this.unexpectedTracks[peerSocketId] &&
+                    this.unexpectedTracks[peerSocketId].audioTrack
+                if (newTrack.kind === 'audio') {
+                    audioTrack = newTrack
+                }
+                let videoTrack =
+                    this.unexpectedTracks[peerSocketId] &&
+                    this.unexpectedTracks[peerSocketId].videoTrack
+                if (newTrack.kind === 'video') {
+                    videoTrack = newTrack
+                }
+                this.unexpectedTracks[peerSocketId] = { audioTrack, videoTrack }
             }
+
             let peerConnectionTrackMapper = { ...this.state.peerConnectionTrackMapper }
             peerConnectionTrackMapper[peerSocketId] = pcMapper
             this.setState({ peerConnectionTrackMapper })
