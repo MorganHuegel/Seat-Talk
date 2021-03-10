@@ -140,6 +140,7 @@ const BroadcastVideo = (props) => {
                     <Fragment key={c.socket_id}>
                         {!!c.screenVideoTrack && currentVideoTrackId !== c.screenVideoTrack.id && (
                             <Video
+                                key={c.socket_id + c.screenVideoTrack.id}
                                 client={c}
                                 styles={styles}
                                 isScreenShare
@@ -148,6 +149,7 @@ const BroadcastVideo = (props) => {
                         )}
                         {(!c.videoTrack || currentVideoTrackId !== c.videoTrack.id) && (
                             <Video
+                                key={c.socket_id + (c.videoTrack ? c.videoTrack.id : 'none')}
                                 client={c}
                                 styles={styles}
                                 handleClick={() =>
