@@ -4,13 +4,18 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+}
+@media only screen and (min-width: 500px) {
+    .page {
+        padding-left: calc(50vw - 80px);
+    }
 }
 
 .wordBubble {
     position: relative;
-    left: 150px;
-    top: 15px;
+    left: 20px;
+    top: 0px;
 }
 .wordBubble .bubbleOuter {
     border-radius: 50%;
