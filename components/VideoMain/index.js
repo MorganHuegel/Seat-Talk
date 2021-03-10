@@ -260,13 +260,26 @@ export default class VideoMain extends React.Component {
             }
             let pcMapper = { ...this.state.peerConnectionTrackMapper[peerSocketId] }
             let newTrack = event.track
-            if (pcMapper.isExpectingAudio && newTrack.kind === 'audio') {
+
+            // maybe we can discern which track it is by allClientsInRoom
+            let clientData = this.props.allClientsInRoom.find((c) => c.socket_id === peerSocketId)
+
+            if (
+                (pcMapper.isExpectingAudio && newTrack.kind === 'audio') ||
+                newTrack.id === clientData.audio_track_id
+            ) {
                 pcMapper.audioTrack = newTrack
                 pcMapper.isExpectingAudio = false
-            } else if (pcMapper.isExpectingVideo && newTrack.kind === 'video') {
+            } else if (
+                (pcMapper.isExpectingVideo && newTrack.kind === 'video') ||
+                newTrack.id === clientData.video_track_id
+            ) {
                 pcMapper.videoTrack = newTrack
                 pcMapper.isExpectingVideo = false
-            } else if (pcMapper.isExpectingScreen && newTrack.kind === 'video') {
+            } else if (
+                (pcMapper.isExpectingScreen && newTrack.kind === 'video') ||
+                newTrack.id === clientData.screen_video_track_id
+            ) {
                 pcMapper.screenTrack = newTrack
                 pcMapper.isExpectingScreen = false
             } else {
@@ -659,8 +672,6 @@ export default class VideoMain extends React.Component {
             .filter((c) => c.socket_id !== id)
             .map((client) => {
                 let trackData = peerConnectionTrackMapper[client.socket_id]
-                console.log('trackData: ', trackData)
-                console.log('client: ', client)
                 return {
                     socketId: client.socket_id,
                     id: client.id,

@@ -52,8 +52,26 @@ const BroadcastVideo = (props) => {
     })
 
     function handleClickVideo(trackId) {
-        setCurrentVideoTrackId(trackId)
+        if (otherClientsInRoom.length > 1) {
+            setCurrentVideoTrackId(trackId)
+        } else if (otherClientsInRoom.length === 1 && otherClientsInRoom[0].screenVideoTrack) {
+            setCurrentVideoTrackId(trackId)
+        }
     }
+
+    useEffect(() => {
+        if (
+            currentVideoTrackId &&
+            !props.otherClientsInRoom.some((c) => {
+                return (
+                    (c.videoTrack && c.videoTrack.id === currentVideoTrackId) ||
+                    (c.screenVideoTrack && c.screenVideoTrack.id === currentVideoTrackId)
+                )
+            })
+        ) {
+            setCurrentVideoTrackId(null)
+        }
+    }, [props.otherClientsInRoom])
 
     let clientCount = otherClientsInRoom.reduce(
         (acc, client) => (client.screenVideoTrack ? acc + 2 : acc + 1),
