@@ -39,28 +39,12 @@ export default class VideoMain extends React.Component {
             screen_audio_track_id: null,
             screen_video_track_id: null,
             errorMessage: '',
-            availableTracks: [],
             peerConnectionTrackMapper: {},
         }
 
         this.ownVideo = React.createRef()
         this.ownScreenVideo = React.createRef()
         this.peerConnections = {}
-    }
-
-    removeUnavailableTracks = () => {
-        this.setState({
-            availableTracks: this.state.availableTracks.filter((track) => {
-                return this.props.allClientsInRoom.find((client) => {
-                    return [
-                        client.audio_track_id,
-                        client.video_track_id,
-                        client.screen_audio_track_id,
-                        client.screen_video_track_id,
-                    ].includes(track.id)
-                })
-            }),
-        })
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -72,19 +56,12 @@ export default class VideoMain extends React.Component {
                         !this.props.allClientsInRoom.find((c) => c.socket_id === client.socket_id)
                 )
 
-                return this.setState(
-                    {
-                        availableTracks: this.state.availableTracks.filter((track) => {
-                            return ![
-                                clientWhoLeft.audio_track_id,
-                                clientWhoLeft.video_track_id,
-                                clientWhoLeft.screen_audio_track_id,
-                                clientWhoLeft.screen_video_track_id,
-                            ].includes(track.id)
-                        }),
-                    },
-                    this.removeUnavailableTracks()
-                )
+                const peerConnectionTrackMapper = { ...this.state.peerConnectionTrackMapper }
+                delete peerConnectionTrackMapper[clientWhoLeft.socket_id]
+
+                return this.setState({
+                    peerConnectionTrackMapper,
+                })
             }
 
             // if someone was just added, don't do anything special
@@ -111,6 +88,7 @@ export default class VideoMain extends React.Component {
                 const prevClient = prevProps.allClientsInRoom.find(
                     (c) => c.socket_id === clientToggledTrack.socket_id
                 )
+
                 const newPcTrackMap = this.state.peerConnectionTrackMapper[
                     clientToggledTrack.socket_id
                 ]
@@ -119,22 +97,34 @@ export default class VideoMain extends React.Component {
                       }
                     : { ...initializeMapper }
 
+                const isToggledOn =
+                    (!prevClient.video_track_id && clientToggledTrack.video_track_id) ||
+                    (!prevClient.audio_track_id && clientToggledTrack.audio_track_id) ||
+                    (!prevClient.screen_video_track_id && clientToggledTrack.screen_video_track_id)
+
                 newPcTrackMap.isExpectingAudio =
-                    !prevClient.audio_track_id &&
-                    prevClient.audio_track_id !== clientToggledTrack.audio_track_id
+                    !prevClient.audio_track_id && !!clientToggledTrack.audio_track_id
                 newPcTrackMap.isExpectingVideo =
-                    !prevClient.video_track_id &&
-                    prevClient.video_track_id !== clientToggledTrack.video_track_id
+                    !prevClient.video_track_id && !!clientToggledTrack.video_track_id
                 newPcTrackMap.isExpectingScreen =
-                    !prevClient.screen_video_track_id &&
-                    prevClient.screen_video_track_id !== clientToggledTrack.screen_video_track_id
+                    !prevClient.screen_video_track_id && !!clientToggledTrack.screen_video_track_id
+
+                if (!isToggledOn) {
+                    newPcTrackMap.audioTrack = clientToggledTrack.audio_track_id
+                        ? newPcTrackMap.audioTrack
+                        : null
+                    newPcTrackMap.videoTrack = clientToggledTrack.video_track_id
+                        ? newPcTrackMap.videoTrack
+                        : null
+                    newPcTrackMap.audioTrack = clientToggledTrack.screen_video_track_id
+                        ? newPcTrackMap.screenTrack
+                        : null
+                }
 
                 const peerConnectionTrackMapper = { ...this.state.peerConnectionTrackMapper }
                 peerConnectionTrackMapper[clientToggledTrack.socket_id] = newPcTrackMap
                 this.setState({ peerConnectionTrackMapper })
             }
-
-            this.removeUnavailableTracks()
         }
     }
 
@@ -142,7 +132,6 @@ export default class VideoMain extends React.Component {
         const { socket } = this.props
 
         socket.on('watcherRequest', async ({ requestingSocketId }) => {
-            console.log('watcher request received')
             let {
                 audio_track_id,
                 video_track_id,
@@ -188,7 +177,6 @@ export default class VideoMain extends React.Component {
         })
 
         socket.on('offer', async ({ offer, sentFromSocketId }) => {
-            console.log('offer received')
             let peerConnection =
                 this.peerConnections[sentFromSocketId] ||
                 (await this.createPeerConnection(sentFromSocketId))
@@ -207,14 +195,12 @@ export default class VideoMain extends React.Component {
         })
 
         socket.on('answer', async ({ localDescription, sentFromSocketId }) => {
-            console.log('answer received')
             const peerConnection = this.peerConnections[sentFromSocketId]
             let remoteDescription = new RTCSessionDescription(localDescription)
             await peerConnection.setRemoteDescription(remoteDescription)
         })
 
         socket.on('candidate', async ({ candidate, fromSocketId }) => {
-            console.log('candidate received')
             try {
                 const peerConnection = this.peerConnections[fromSocketId]
                 if (peerConnection) {
@@ -226,13 +212,6 @@ export default class VideoMain extends React.Component {
                 console.error('caught error adding ICE candidate', e)
             }
         })
-
-        /*
-         * WebRTC Resources:
-         *  https://gabrieltanner.org/blog/webrtc-video-broadcast
-         *  https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Connectivity
-         *  https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling
-         */
     }
 
     componentWillUnmount() {
@@ -256,7 +235,6 @@ export default class VideoMain extends React.Component {
 
         let peerConnection = new RTCPeerConnection(this.getRTCConfig())
         peerConnection.onicecandidate = (event) => {
-            console.log('onicecandidate')
             if (event.candidate) {
                 socket.emit('candidate', {
                     sendToSocketId: peerSocketId,
@@ -270,29 +248,38 @@ export default class VideoMain extends React.Component {
             }
         }
         peerConnection.onnegotiationneeded = async (event) => {
-            console.log('negotiotionneeded')
             this.sendNegotiationOffer(peerConnection, peerSocketId)
         }
         peerConnection.ontrack = async (event) => {
-            console.log('ontrack (added)')
+            if (!this.state.peerConnectionTrackMapper[peerSocketId]) {
+                console.error(`
+                    ontrack fired, but peerConnectionTrackMapper has not yet 
+                    been created for this socket ID: ${peerSocketId}
+                `)
+                return
+            }
             let pcMapper = { ...this.state.peerConnectionTrackMapper[peerSocketId] }
             let newTrack = event.track
-            if (pcMapper.isExpectingAudio) {
+            if (pcMapper.isExpectingAudio && newTrack.kind === 'audio') {
                 pcMapper.audioTrack = newTrack
-                pc.isExpectingAudio = false
-            } else if (pcMapper.isExpectingVideo) {
+                pcMapper.isExpectingAudio = false
+            } else if (pcMapper.isExpectingVideo && newTrack.kind === 'video') {
                 pcMapper.videoTrack = newTrack
                 pcMapper.isExpectingVideo = false
-            } else if (pcMapper.isExpectingScreen) {
+            } else if (pcMapper.isExpectingScreen && newTrack.kind === 'video') {
                 pcMapper.screenTrack = newTrack
                 pcMapper.isExpectingScreen = false
+            } else {
+                console.error(
+                    `ontrack fired before allClientsInRoom was updated.
+                    Gotta fix this timing issue! 
+                    event.track: ${event.track}
+                    pcMapper: ${pcMapper}`
+                )
             }
             let peerConnectionTrackMapper = { ...this.state.peerConnectionTrackMapper }
             peerConnectionTrackMapper[peerSocketId] = pcMapper
-            this.setState({
-                peerConnectionTrackMapper,
-                availableTracks: [...this.state.availableTracks, event.track],
-            })
+            this.setState({ peerConnectionTrackMapper })
         }
         peerConnection.onremovetrack = (event) => {
             // onremovetrack method coming soon??
@@ -411,7 +398,6 @@ export default class VideoMain extends React.Component {
 
                 // step 4 - update allClientsInRoom state
                 const videoTrack = localStream.getVideoTracks()[0]
-                console.log('videoTrackId: ', videoTrack.id)
                 const audioTrack = this.state.audio_track_id && localStream.getAudioTracks()[0]
                 this.setState(
                     {
@@ -654,7 +640,7 @@ export default class VideoMain extends React.Component {
             video_track_id,
             screen_video_track_id,
             errorMessage,
-            availableTracks,
+            peerConnectionTrackMapper,
         } = this.state
         const {
             allClientsInRoom,
@@ -667,6 +653,24 @@ export default class VideoMain extends React.Component {
             allClientsInRoom.some((c) => c.socket_id === id) &&
             allClientsInRoom.find((c) => c.socket_id === id).display_name
 
+        // get client data from allClientsInRoom, but
+        // get Tracks from peerConnectionTrackMapper
+        let otherClientsInRoom = allClientsInRoom
+            .filter((c) => c.socket_id !== id)
+            .map((client) => {
+                let trackData = peerConnectionTrackMapper[client.socket_id]
+                console.log('trackData: ', trackData)
+                console.log('client: ', client)
+                return {
+                    socketId: client.socket_id,
+                    id: client.id,
+                    audioTrack: trackData ? trackData.audioTrack : null,
+                    videoTrack: trackData ? trackData.videoTrack : null,
+                    screenVideoTrack: trackData ? trackData.screenTrack : null,
+                    displayName: client.display_name,
+                }
+            })
+
         return (
             <div>
                 <div className={style.topBar}>
@@ -678,10 +682,7 @@ export default class VideoMain extends React.Component {
                     </h2>
                     <CopyButton copyString={window.location.href} />
                 </div>
-                <BroadcastVideo
-                    otherClientsInRoom={allClientsInRoom.filter((c) => c.socket_id !== id)}
-                    availableTracks={availableTracks}
-                />
+                <BroadcastVideo otherClientsInRoom={otherClientsInRoom} />
                 <OwnVideo
                     ref={this.ownVideo}
                     audio_track_id={audio_track_id}

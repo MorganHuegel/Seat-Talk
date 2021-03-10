@@ -4,24 +4,24 @@ import style from '../../../styles/Components/VideoMain/BroadcastVideo/Broadcast
 import Video from './Video'
 
 const BroadcastVideo = (props) => {
-    const { otherClientsInRoom, availableTracks } = props
+    const { otherClientsInRoom } = props
     otherClientsInRoom.sort((a, b) => {
         // shared screen goes at the top
-        if (b.screen_video_track_id && !a.screen_video_track_id) {
+        if (b.screenVideoTrack && !a.screenVideoTrack) {
             return 1
-        } else if (!b.screen_video_track_id && a.screen_video_track_id) {
+        } else if (!b.screenVideoTrack && a.screenVideoTrack) {
             return -1
         } else {
             // video sharing comes next
-            if (b.video_track_id && !a.video_track_id) {
+            if (b.videoTrack && !a.videoTrack) {
                 return 1
-            } else if (!b.video_track_id && a.video_track_id) {
+            } else if (!b.videoTrack && a.videoTrack) {
                 return -1
             } else {
                 // audio sharing comes next
-                if (b.audio_track_id && !a.audio_track_id) {
+                if (b.audioTrack && !a.audioTrack) {
                     return 1
-                } else if (!b.audio_track_id && a.audio_track_id) {
+                } else if (!b.audioTrack && a.audioTrack) {
                     return -1
                 }
                 // finally, just sort by id (order joined)
@@ -56,7 +56,7 @@ const BroadcastVideo = (props) => {
     }
 
     let clientCount = otherClientsInRoom.reduce(
-        (acc, client) => (client.screen_video_track_id ? acc + 2 : acc + 1),
+        (acc, client) => (client.screenVideoTrack ? acc + 2 : acc + 1),
         0
     )
 
@@ -94,15 +94,18 @@ const BroadcastVideo = (props) => {
     }
 
     let fullScreenVideo
-    let fullScreenClient = otherClientsInRoom.find((c) =>
-        [c.screen_video_track_id, c.video_track_id].includes(currentVideoTrackId)
+    let fullScreenClient = otherClientsInRoom.find(
+        (c) =>
+            (c.screenVideoTrack && c.screenVideoTrack.id === currentVideoTrackId) ||
+            (c.videoTrack && c.videoTrack.id === currentVideoTrackId)
     )
     if (currentVideoTrackId && fullScreenClient) {
-        let isScreenShare = fullScreenClient.screen_video_track_id === currentVideoTrackId
+        let isScreenShare =
+            fullScreenClient.screenVideoTrack &&
+            fullScreenClient.screenVideoTrack.id === currentVideoTrackId
         fullScreenVideo = (
             <Video
                 client={fullScreenClient}
-                availableTracks={availableTracks}
                 styles={{ width: '100%', height: '100%' }}
                 key={'fullscreen' + fullScreenClient.socket_id}
                 handleClick={() => handleClickVideo(null)}
@@ -115,40 +118,27 @@ const BroadcastVideo = (props) => {
         <div className={style.broadcastVideoContainer}>
             {fullScreenVideo}
             {otherClientsInRoom.length > 0 ? (
-                otherClientsInRoom.map((c) =>
-                    c.screen_video_track_id ? (
-                        <Fragment key={c.socket_id}>
-                            {(!currentVideoTrackId ||
-                                currentVideoTrackId !== c.screen_video_track_id) && (
-                                <Video
-                                    client={c}
-                                    availableTracks={availableTracks}
-                                    styles={styles}
-                                    isScreenShare
-                                    handleClick={() => handleClickVideo(c.screen_video_track_id)}
-                                />
-                            )}
-                            {(!currentVideoTrackId || currentVideoTrackId !== c.video_track_id) && (
-                                <Video
-                                    client={c}
-                                    availableTracks={availableTracks}
-                                    styles={styles}
-                                    handleClick={() => handleClickVideo(c.video_track_id)}
-                                />
-                            )}
-                        </Fragment>
-                    ) : (
-                        (!currentVideoTrackId || currentVideoTrackId !== c.video_track_id) && (
+                otherClientsInRoom.map((c) => (
+                    <Fragment key={c.socket_id}>
+                        {!!c.screenVideoTrack && currentVideoTrackId !== c.screenVideoTrack.id && (
                             <Video
                                 client={c}
-                                availableTracks={availableTracks}
                                 styles={styles}
-                                key={c.socket_id}
-                                handleClick={() => handleClickVideo(c.video_track_id)}
+                                isScreenShare
+                                handleClick={() => handleClickVideo(c.screenVideoTrack.id)}
                             />
-                        )
-                    )
-                )
+                        )}
+                        {(!c.videoTrack || currentVideoTrackId !== c.videoTrack.id) && (
+                            <Video
+                                client={c}
+                                styles={styles}
+                                handleClick={() =>
+                                    handleClickVideo(c.videoTrack ? c.videoTrack.id : null)
+                                }
+                            />
+                        )}
+                    </Fragment>
+                ))
             ) : (
                 <div className={style.emptyRoomMessage}>
                     <p>Share this url for other people to join:</p>
@@ -160,8 +150,7 @@ const BroadcastVideo = (props) => {
 }
 
 BroadcastVideo.propTypes = {
-    otherClientsInRoom: PropTypes.array,
-    availableTracks: PropTypes.array,
+    otherClientsInRoom: PropTypes.array.isRequired,
 }
 
 export default BroadcastVideo

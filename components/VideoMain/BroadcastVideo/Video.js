@@ -7,23 +7,15 @@ import style from '../../../styles/Components/VideoMain/BroadcastVideo/Broadcast
 
 const Video = (props) => {
     const videoNode = useRef(null)
-    let { client, availableTracks, styles, isScreenShare, handleClick } = props
+    let { client, styles, isScreenShare, handleClick } = props
     let [tracks, setTracks] = useState([])
 
-    function setFilteredTracks() {
-        let tracks = availableTracks.filter((t) => {
-            if (isScreenShare) {
-                return t && t.id && t.id === client.screen_video_track_id
-            } else {
-                return t && t.id && [client.audio_track_id, client.video_track_id].includes(t.id)
-            }
-        })
-        setTracks(tracks)
-    }
-
     useEffect(() => {
-        setFilteredTracks()
-    }, [availableTracks])
+        let newTracks = isScreenShare
+            ? [client.screenVideoTrack]
+            : [client.videoTrack, client.audioTrack]
+        setTracks(newTracks.filter((t) => t)) // remove null's
+    }, [client])
 
     async function addTracks() {
         const stream = new MediaStream()
@@ -36,7 +28,7 @@ const Video = (props) => {
         }
     }
 
-    if (videoNode.current && tracks.length) {
+    if (videoNode && videoNode.current && tracks.length) {
         addTracks()
     }
 
@@ -64,7 +56,7 @@ const Video = (props) => {
             onClick={handleClick}
         >
             <p className={style.displayName}>
-                {isScreenShare ? client.display_name + "'s Screen" : client.display_name}
+                {isScreenShare ? client.displayName + "'s Screen" : client.displayName}
                 {isMuted && (
                     <span className={style.mutedIcon}>
                         &nbsp;
@@ -83,8 +75,7 @@ const Video = (props) => {
 }
 
 Video.propTypes = {
-    client: PropTypes.object,
-    availableTracks: PropTypes.array,
+    client: PropTypes.object.isRequired,
     styles: PropTypes.object,
     isScreenShare: PropTypes.bool,
 }
