@@ -116,7 +116,7 @@ export default class VideoMain extends React.Component {
                     newPcTrackMap.videoTrack = clientToggledTrack.video_track_id
                         ? newPcTrackMap.videoTrack
                         : null
-                    newPcTrackMap.audioTrack = clientToggledTrack.screen_video_track_id
+                    newPcTrackMap.screenTrack = clientToggledTrack.screen_video_track_id
                         ? newPcTrackMap.screenTrack
                         : null
                 }
