@@ -3,6 +3,8 @@ import { useRouter } from 'next/router'
 import { io } from 'socket.io-client'
 import VideoMain from '../components/VideoMain'
 
+const APP_URL = 'https://seat-talk.herokuapp.com'
+
 class Room extends React.Component {
     constructor(props) {
         super(props)
@@ -53,13 +55,20 @@ class Room extends React.Component {
                 ),
             })
         })
-
+        console.log('mounted')
         // Every 5 minutes, ping the server to keep dynos from falling asleep.
         // Free Heroku plan has dynos go to sleep after 30 minutes of inactivity,
         // causing reconnection bug.
         this.heartbeatHeroku = setInterval(() => {
+            console.log('doing the thing')
             this.socket.emit('heartbeatHeroku')
-        }, 1000 * 60 * 5)
+            return fetch(APP_URL, { method: 'GET' })
+                .then((res) => res.json())
+                .then((res) => {
+                    console.log('res: ', res)
+                })
+            // }, 1000 * 60 * 5)
+        }, 1000 * 10)
 
         this.setState({ isLoading: false })
     }
