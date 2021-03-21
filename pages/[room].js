@@ -55,20 +55,16 @@ class Room extends React.Component {
                 ),
             })
         })
-        console.log('mounted')
+
         // Every 5 minutes, ping the server to keep dynos from falling asleep.
         // Free Heroku plan has dynos go to sleep after 30 minutes of inactivity,
         // causing reconnection bug.
         this.heartbeatHeroku = setInterval(() => {
-            console.log('doing the thing')
             this.socket.emit('heartbeatHeroku')
-            return fetch(APP_URL, { method: 'GET' })
-                .then((res) => res.json())
-                .then((res) => {
-                    console.log('res: ', res)
-                })
-            // }, 1000 * 60 * 5)
-        }, 1000 * 10)
+            return fetch(APP_URL, { method: 'GET' }).then((res) => {
+                console.log('Keeping heroku awake :)')
+            })
+        }, 1000 * 60 * 5)
 
         this.setState({ isLoading: false })
     }

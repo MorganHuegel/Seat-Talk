@@ -795,7 +795,16 @@ export default class VideoMain extends React.Component {
                     display_name={ownDisplayName}
                 />
                 <video ref={this.ownScreenVideo} style={{ display: 'none' }} />
-                {errorMessage && <p>{errorMessage}</p>}
+                <div className={`${style.errorMessage} ${errorMessage && style.show}`}>
+                    <p>{errorMessage}</p>
+                    <button
+                        type="button"
+                        onClick={() => this.setState({ errorMessage: '' })}
+                        className={style.close}
+                    >
+                        X
+                    </button>
+                </div>
                 <div className={style.buttonContainer}>
                     <AudioButton
                         handleClick={this.handleClickAudio}

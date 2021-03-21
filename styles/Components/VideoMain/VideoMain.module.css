@@ -31,3 +31,36 @@
 .topBar h2 {
     margin: 0;
 }
+
+.errorMessage {
+    position: absolute;
+    top: -60px;
+    left: 0;
+    background: rgb(255, 200, 200);
+    margin: 0;
+    padding: 20px 30px 20px 20px;
+    border-radius: 5px;
+    border: 3px double red;
+
+    transition: top linear 0.2s;
+}
+.errorMessage.show {
+    top: 60px;
+    transition: top linear 0.2s;
+}
+.errorMessage p {
+    margin: 0;
+}
+.errorMessage .close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    font-weight: bold;
+}
+.errorMessage .close:hover,
+.errorMessage .close:active {
+    cursor: pointer;
+    background: rgb(255, 180, 180);
+}
