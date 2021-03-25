@@ -1,15 +1,10 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import style from '../../styles/Components/VideoMain/VideoMain.module.css'
-import {
-    AudioButton,
-    VideoButton,
-    ShareButton,
-    ParticipantsListButton,
-    CopyButton,
-} from '../Buttons'
+import { AudioButton, VideoButton, ShareButton, TopBarButton, CopyButton } from '../Buttons'
 import OwnVideo from './OwnVideo'
 import BroadcastVideo from './BroadcastVideo'
+import ParticipantsList from '../ParticipantsList'
 
 const initializeMapper = {
     audioTrack: null,
@@ -19,6 +14,8 @@ const initializeMapper = {
     isExpectingVideo: false,
     isExpectingScreen: false,
 }
+
+const sidebarTransitionTime = 200
 
 export default class VideoMain extends React.Component {
     static propTypes = {
@@ -40,6 +37,9 @@ export default class VideoMain extends React.Component {
             screen_video_track_id: null,
             errorMessage: '',
             peerConnectionTrackMapper: {},
+
+            sidebarState: '',
+            isSidebarClosing: false,
         }
 
         this.ownVideo = React.createRef()
@@ -738,6 +738,18 @@ export default class VideoMain extends React.Component {
         ],
     })
 
+    handleClickParticipants = () => {
+        if (!this.state.sidebarState) {
+            this.setState({ sidebarState: 'participants' })
+        } else {
+            this.setState({ isSidebarClosing: true }, () => {
+                setTimeout(() => {
+                    this.setState({ sidebarState: '', isSidebarClosing: false })
+                }, sidebarTransitionTime)
+            })
+        }
+    }
+
     render() {
         const {
             is_audio_loading,
@@ -748,6 +760,8 @@ export default class VideoMain extends React.Component {
             screen_video_track_id,
             errorMessage,
             peerConnectionTrackMapper,
+            sidebarState,
+            isSidebarClosing,
         } = this.state
         const {
             allClientsInRoom,
@@ -779,15 +793,32 @@ export default class VideoMain extends React.Component {
         return (
             <div>
                 <div className={style.topBar}>
-                    <div className={style.participantsList}>
-                        <ParticipantsListButton allClientsInRoom={allClientsInRoom} />
+                    <div>
+                        <TopBarButton
+                            title={`Participants (${allClientsInRoom.length})`}
+                            handleClick={this.handleClickParticipants}
+                        />
                     </div>
-                    <h2>
-                        <span className={style.label}>Room Name:</span> {this.props.roomId}
-                    </h2>
-                    <CopyButton copyString={window.location.href} />
+                    <div>
+                        <h2>
+                            <span className={style.label}>Room Name:</span> {this.props.roomId}
+                        </h2>
+                        <CopyButton copyString={window.location.href} />
+                    </div>
                 </div>
-                <BroadcastVideo otherClientsInRoom={otherClientsInRoom} />
+                <div className={style.ownVideoRow}>
+                    <div
+                        style={{ transition: `flex-basis ${sidebarTransitionTime}ms linear` }}
+                        className={`${style.sidebar} ${
+                            isSidebarClosing || sidebarState === '' ? style.closing : ''
+                        }`}
+                    >
+                        {sidebarState === 'participants' && (
+                            <ParticipantsList allClientsInRoom={allClientsInRoom} />
+                        )}
+                    </div>
+                    <BroadcastVideo otherClientsInRoom={otherClientsInRoom} />
+                </div>
                 <OwnVideo
                     ref={this.ownVideo}
                     audio_track_id={audio_track_id}

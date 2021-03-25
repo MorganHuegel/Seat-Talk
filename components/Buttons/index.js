@@ -128,37 +128,21 @@ const CopyButton = (props) => {
     )
 }
 
-const ParticipantsListButton = (props) => {
-    const { allClientsInRoom } = props
+const TopBarButton = (props) => {
     const [isExpanded, setIsExpanded] = useState(false)
 
-    function handleClick(e) {
-        setIsExpanded(!isExpanded)
+    function handleClick() {
+        setIsExpanded((currIsExpanded) => !currIsExpanded)
+        props.handleClick()
     }
 
     return (
-        <div className={style.participantsList}>
-            <button onClick={handleClick}>
-                Participants ({allClientsInRoom.length})&nbsp;&nbsp;
-                <span className={isExpanded ? style.upArrow : ''}>
-                    <FontAwesomeIcon icon={isExpanded ? faSortUp : faSortDown} />
-                </span>
-            </button>
-            <ul
-                className={`${style.list} ${isExpanded ? style.isExpanded : ''}`}
-                style={{
-                    maxHeight: isExpanded
-                        ? `${
-                              allClientsInRoom.length * 17 + (allClientsInRoom.length - 1) * 14 + 22
-                          }px`
-                        : '0px',
-                }}
-            >
-                {allClientsInRoom.map((client) => (
-                    <li key={client.socket_id}>{client.display_name}</li>
-                ))}
-            </ul>
-        </div>
+        <button onClick={handleClick} className={style.topBarButton}>
+            {props.title}&nbsp;&nbsp;
+            <span className={isExpanded ? style.upArrow : ''}>
+                <FontAwesomeIcon icon={isExpanded ? faSortUp : faSortDown} />
+            </span>
+        </button>
     )
 }
 
@@ -169,5 +153,5 @@ export {
     PeerConnectionButton,
     JoinButton,
     CopyButton,
-    ParticipantsListButton,
+    TopBarButton,
 }

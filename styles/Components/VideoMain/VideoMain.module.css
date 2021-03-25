@@ -14,14 +14,13 @@
     background-color: rgb(240, 240, 240);
     border: 2px solid rgb(200, 200, 200);
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     position: relative;
-    padding-right: 20px;
+    padding: 0 20px;
 }
-.topBar .participantsList {
-    position: absolute;
-    left: 0;
+.topBar h2 {
+    display: inline;
 }
 .topBar .label {
     color: rgb(100, 100, 100);
@@ -63,4 +62,38 @@
 .errorMessage .close:active {
     cursor: pointer;
     background: rgb(255, 180, 180);
+}
+
+.ownVideoRow {
+    height: calc(100vh - 60px - 65px);
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-start;
+}
+.ownVideoRow .sidebar {
+    overflow-y: scroll;
+    flex-basis: 150px;
+    flex-shrink: 0;
+    overflow-x: hidden;
+
+    /* cover up the bottom border of the top bar above the sidebar */
+    position: relative;
+    height: calc(100vh - 60px - 65px + 2px);
+    background-color: rgb(240, 240, 240);
+    border-right: 2px solid rgb(200, 200, 200);
+    border-bottom: 2px solid rgb(200, 200, 200);
+    top: -2px;
+}
+.ownVideoRow .sidebar.closing {
+    flex-basis: 0px;
+    border-right: 0px;
+    border-bottom: 0px;
+}
+
+@media only screen and (min-width: 500px) {
+    .ownVideoRow .sidebar {
+        overflow-y: scroll;
+        flex-basis: 250px;
+    }
 }

@@ -154,48 +154,18 @@
     top: 10000px;
 }
 
-.participantsList button {
+.topBarButton {
     border: none;
     background: none;
     padding: 5px;
-    margin: 0 10px 0 15px;
     color: rgb(100, 100, 100);
 }
-.participantsList button:hover,
-.participantsList button:focus {
+.topBarButton:hover,
+.topBarButton:focus {
     cursor: pointer;
     color: rgb(50, 50, 50);
 }
-.participantsList .upArrow {
+.topBarButton .upArrow {
     position: relative;
     top: 5px;
-}
-.participantsList .list {
-    position: absolute;
-    top: 40px;
-    list-style: none;
-    left: -1px;
-    margin: 0;
-    width: 100%;
-    background-color: rgb(240, 240, 240);
-    border-bottom: 2px solid rgb(200, 200, 200);
-    border-right: 2px solid rgb(200, 200, 200);
-    border-left: 2px solid rgb(200, 200, 200);
-    color: rgb(100, 100, 100);
-    font-size: 14px;
-
-    padding: 0;
-    overflow: hidden;
-    transition: max-height 0.15s linear, padding 0s linear;
-}
-.participantsList .list.isExpanded {
-    z-index: 1;
-    padding: 0 20px 20px 20px;
-    transition: max-height 0.15s linear;
-}
-.participantsList .list li {
-    margin-top: 14px;
-}
-.participantsList .list li:first-child {
-    margin-top: 0;
 }
