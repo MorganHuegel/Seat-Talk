@@ -8,6 +8,7 @@ import {
     faAlignCenter,
     faMicrophoneAltSlash,
 } from '@fortawesome/free-solid-svg-icons'
+import { sidebarTransitionTime } from '../index'
 
 const OwnVideo = React.forwardRef((props, ref) => {
     const { audio_track_id, video_track_id, display_name } = props
@@ -15,7 +16,15 @@ const OwnVideo = React.forwardRef((props, ref) => {
     const [justifyVideo, setJustifyVideo] = useState(screenWidth < 500 ? 'flex-start' : 'center')
 
     return (
-        <div className={style.videoContainer} style={{ justifyContent: justifyVideo }}>
+        <div
+            className={`${style.videoContainer} ${
+                props.isSidebarClosing || props.sidebarState === '' ? '' : style.withSidebar
+            }`}
+            style={{
+                justifyContent: justifyVideo,
+                transition: `left ${sidebarTransitionTime}ms linear, width ${sidebarTransitionTime}ms linear`,
+            }}
+        >
             <div className={style.videoPlayer}>
                 <div className={style.alignButtonContainer}>
                     <button type="button" onClick={() => setJustifyVideo('flex-start')}>

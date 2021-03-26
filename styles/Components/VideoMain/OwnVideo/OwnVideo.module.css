@@ -2,10 +2,15 @@
     position: absolute;
     bottom: 65px; /* height of the bottons div */
     background: rgba(0, 0, 0, 0);
-    width: 100%;
     display: flex;
     align-items: center;
+    left: 0px;
+    width: 100%;
     /* justify-content set in component */
+}
+.videoContainer.withSidebar {
+    left: 250px;
+    width: calc(100% - 250px);
 }
 
 .videoPlayer {
@@ -105,6 +110,10 @@
 @media only screen and (max-width: 500px) {
     .videoContainer {
         justify-content: flex-start;
+    }
+    .videoContainer.withSidebar {
+        left: 150px;
+        width: calc(100% - 150px);
     }
     .alignButtonContainer {
         display: none;

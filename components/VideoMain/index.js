@@ -16,7 +16,7 @@ const initializeMapper = {
     isExpectingScreen: false,
 }
 
-const sidebarTransitionTime = 200
+export const sidebarTransitionTime = 200
 
 export default class VideoMain extends React.Component {
     static propTypes = {
@@ -848,6 +848,8 @@ export default class VideoMain extends React.Component {
                     audio_track_id={audio_track_id}
                     video_track_id={video_track_id}
                     display_name={ownDisplayName}
+                    sidebarState={sidebarState}
+                    isSidebarClosing={isSidebarClosing}
                 />
                 <video ref={this.ownScreenVideo} style={{ display: 'none' }} />
                 <div className={`${style.errorMessage} ${errorMessage && style.show}`}>
