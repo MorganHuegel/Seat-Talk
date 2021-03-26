@@ -185,3 +185,46 @@
     position: relative;
     top: 5px;
 }
+
+.clapButton,
+.codeButton {
+    position: relative;
+    border-radius: 50%;
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+    background: white;
+    color: black;
+    margin-left: 7px;
+}
+.clapButton:hover,
+.clapButton:focus,
+.codeButton:hover,
+.codeButton:focus {
+    cursor: pointer;
+    background: rgb(230, 230, 230);
+}
+.clapButton .tooltip,
+.codeButton .tooltip {
+    visibility: hidden;
+    font-size: 1rem;
+    top: 2em;
+    left: -7em;
+}
+.clapButton:hover .tooltip,
+.clapButton:focus .tooltip,
+.codeButton:hover .tooltip,
+.codeButton:focus .tooltip {
+    visibility: visible;
+}
+
+.codeButton {
+    background: none;
+    border: none;
+}
+.codeButton.on {
+    background: rgb(180, 180, 180);
+}

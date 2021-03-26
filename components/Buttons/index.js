@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import style from '../../styles/Components/Buttons/Buttons.module.css'
 import ReactLoading from 'react-loading'
+import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faMicrophone,
@@ -10,6 +11,7 @@ import {
     faClipboardCheck,
     faSortDown,
     faSortUp,
+    faCode,
 } from '@fortawesome/free-solid-svg-icons'
 import Tooltip from '../Tooltip'
 
@@ -140,6 +142,36 @@ const TopBarButton = ({ title, isExpanded, handleClick }) => (
     </button>
 )
 
+const ClapButton = ({ handleClick }) => {
+    return (
+        <button type="button" className={style.clapButton} onClick={handleClick}>
+            <span className={style.icon}>
+                <Image src="/clap.png" width="40px" height="40px" />
+            </span>
+            <span className={style.tooltip}>
+                <Tooltip message="Clap" />
+            </span>
+        </button>
+    )
+}
+
+const CodeButton = ({ isCode, handleClick }) => {
+    return (
+        <button
+            type="button"
+            className={`${style.codeButton} ${isCode ? style.on : ''}`}
+            onClick={handleClick}
+        >
+            <span className="">
+                <FontAwesomeIcon icon={faCode} />
+            </span>
+            <span className={style.tooltip}>
+                <Tooltip message="Code Format" />
+            </span>
+        </button>
+    )
+}
+
 export {
     AudioButton,
     VideoButton,
@@ -148,4 +180,6 @@ export {
     JoinButton,
     CopyButton,
     TopBarButton,
+    CodeButton,
+    ClapButton,
 }
