@@ -85,7 +85,7 @@ const PeerConnectionButton = (props) => (
 )
 
 const JoinButton = (props) => (
-    <button type="button" className={style.joinButton} onClick={props.handleClick}>
+    <button type="submit" className={style.joinButton}>
         {props.text}
     </button>
 )

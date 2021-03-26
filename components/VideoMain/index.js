@@ -5,6 +5,7 @@ import { AudioButton, VideoButton, ShareButton, TopBarButton, CopyButton } from 
 import OwnVideo from './OwnVideo'
 import BroadcastVideo from './BroadcastVideo'
 import ParticipantsList from '../ParticipantsList'
+import Chat from '../Chat'
 
 const initializeMapper = {
     audioTrack: null,
@@ -838,7 +839,7 @@ export default class VideoMain extends React.Component {
                         {sidebarState === 'Participants' && (
                             <ParticipantsList allClientsInRoom={allClientsInRoom} />
                         )}
-                        {sidebarState === 'Chat' && <div>CHAT</div>}
+                        {sidebarState === 'Chat' && <Chat />}
                     </div>
                     <BroadcastVideo otherClientsInRoom={otherClientsInRoom} />
                 </div>

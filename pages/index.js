@@ -17,7 +17,9 @@ export default function Home() {
         }
         return char
     }
-    function handleClickStart() {
+    function handleClickStart(e) {
+        e.preventDefault()
+
         let room = roomName.current.value
         if (room === '') {
             for (let i = 0; i < 6; i++) {
@@ -51,9 +53,11 @@ export default function Home() {
             </div>
 
             <div className={style.join}>
-                <label>Room Name:</label>
-                <input type="text" placeholder="random" ref={roomName} />
-                <JoinButton handleClick={handleClickStart} text="Start or join room" />
+                <form onSubmit={handleClickStart}>
+                    <label>Room Name:</label>
+                    <input type="text" placeholder="random" ref={roomName} />
+                    <JoinButton text="Start or join room" />
+                </form>
             </div>
         </div>
     )

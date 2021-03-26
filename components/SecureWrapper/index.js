@@ -31,7 +31,9 @@ const SecureWrapper = (props) => {
         }
     }, [])
 
-    async function handleClickJoin() {
+    async function handleClickJoin(e) {
+        e.preventDefault()
+
         if (displayName) {
             return setAcceptJoin(true)
         }
@@ -84,45 +86,47 @@ const SecureWrapper = (props) => {
             {currentPath === '/[room]' && !acceptJoin && (
                 <div className={style.modalContainer}>
                     <div className={style.formContainer}>
-                        {displayName ? (
-                            <h2 className={style.formHeader}>Welcome, {displayName}!</h2>
-                        ) : (
-                            <>
-                                <h2 className={style.formHeader}>Welcome!</h2>
-                                <label htmlFor="display-name">
-                                    Display Name:{' '}
-                                    {requiredMessage && (
-                                        <span className={style.requiredMessage}>*required</span>
-                                    )}
-                                </label>
-                                <input
-                                    className={`${style.formInput} ${
-                                        requiredMessage && style.required
-                                    }`}
-                                    name="display-name"
-                                    ref={displayNameInput}
-                                    onChange={() => setRequiredMessage(false)}
-                                />
-                                <div className={style.formCheckbox}>
-                                    <label>
-                                        <input type="checkbox" ref={rememberMeInput} />
-                                        &nbsp;Remember me
+                        <form onSubmit={handleClickJoin}>
+                            {displayName ? (
+                                <h2 className={style.formHeader}>Welcome, {displayName}!</h2>
+                            ) : (
+                                <>
+                                    <h2 className={style.formHeader}>Welcome!</h2>
+                                    <label htmlFor="display-name">
+                                        Display Name:{' '}
+                                        {requiredMessage && (
+                                            <span className={style.requiredMessage}>*required</span>
+                                        )}
                                     </label>
-                                </div>
-                            </>
-                        )}
-                        <div className={style.buttonContainer}>
-                            <JoinButton handleClick={handleClickJoin} text="Join Room" />
-                            {displayName && (
-                                <button
-                                    type="button"
-                                    onClick={handleEditName}
-                                    className={style.homeLink}
-                                >
-                                    Edit name
-                                </button>
+                                    <input
+                                        className={`${style.formInput} ${
+                                            requiredMessage && style.required
+                                        }`}
+                                        name="display-name"
+                                        ref={displayNameInput}
+                                        onChange={() => setRequiredMessage(false)}
+                                    />
+                                    <div className={style.formCheckbox}>
+                                        <label>
+                                            <input type="checkbox" ref={rememberMeInput} />
+                                            &nbsp;Remember me
+                                        </label>
+                                    </div>
+                                </>
                             )}
-                        </div>
+                            <div className={style.buttonContainer}>
+                                <JoinButton text="Join Room" />
+                                {displayName && (
+                                    <button
+                                        type="button"
+                                        onClick={handleEditName}
+                                        className={style.homeLink}
+                                    >
+                                        Edit name
+                                    </button>
+                                )}
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
