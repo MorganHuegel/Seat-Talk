@@ -19,6 +19,9 @@
     position: relative;
     padding: 0 20px;
 }
+.topBar > div:first-child {
+    max-width: 135px;
+}
 .topBar h2 {
     display: inline;
 }
@@ -92,6 +95,10 @@
 }
 
 @media only screen and (min-width: 500px) {
+    .topBar > div:first-child {
+        max-width: initial;
+    }
+
     .ownVideoRow .sidebar {
         overflow-y: scroll;
         flex-basis: 250px;

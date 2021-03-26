@@ -165,6 +165,22 @@
     cursor: pointer;
     color: rgb(50, 50, 50);
 }
+.topBarButton:first-child {
+    margin-right: 10px;
+}
+.topBarButton .underline {
+    border-bottom: 1px solid rgb(100, 100, 100);
+}
+.topBarButton.dark {
+    color: black;
+}
+.topBarButton.dark .underline {
+    border-bottom: 1px solid black;
+}
+.topBarButton .upArrow {
+    position: relative;
+    top: -1px;
+}
 .topBarButton .upArrow {
     position: relative;
     top: 5px;

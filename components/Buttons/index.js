@@ -128,23 +128,17 @@ const CopyButton = (props) => {
     )
 }
 
-const TopBarButton = (props) => {
-    const [isExpanded, setIsExpanded] = useState(false)
-
-    function handleClick() {
-        setIsExpanded((currIsExpanded) => !currIsExpanded)
-        props.handleClick()
-    }
-
-    return (
-        <button onClick={handleClick} className={style.topBarButton}>
-            {props.title}&nbsp;&nbsp;
-            <span className={isExpanded ? style.upArrow : ''}>
-                <FontAwesomeIcon icon={isExpanded ? faSortUp : faSortDown} />
-            </span>
-        </button>
-    )
-}
+const TopBarButton = ({ title, isExpanded, handleClick }) => (
+    <button
+        onClick={handleClick}
+        className={`${style.topBarButton} ${isExpanded ? style.dark : ''}`}
+    >
+        <span className={isExpanded ? style.underline : ''}>{title}</span>&nbsp;
+        <span className={isExpanded ? style.upArrow : style.downArrow}>
+            <FontAwesomeIcon icon={isExpanded ? faSortUp : faSortDown} />
+        </span>
+    </button>
+)
 
 export {
     AudioButton,

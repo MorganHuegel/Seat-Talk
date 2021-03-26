@@ -40,6 +40,8 @@ export default class VideoMain extends React.Component {
 
             sidebarState: '',
             isSidebarClosing: false,
+            isParticipantsExpanded: false,
+            isChatExpanded: false,
         }
 
         this.ownVideo = React.createRef()
@@ -738,14 +740,26 @@ export default class VideoMain extends React.Component {
         ],
     })
 
-    handleClickParticipants = () => {
-        if (!this.state.sidebarState) {
-            this.setState({ sidebarState: 'participants' })
-        } else {
-            this.setState({ isSidebarClosing: true }, () => {
+    handleClickTopBarButton = (nextState) => {
+        if (this.state.sidebarState === nextState) {
+            // close it
+            this.setState({ isSidebarClosing: true, [`is${nextState}Expanded`]: false }, () => {
                 setTimeout(() => {
                     this.setState({ sidebarState: '', isSidebarClosing: false })
                 }, sidebarTransitionTime)
+            })
+        } else if (!this.state.sidebarState) {
+            // open it
+            this.setState({
+                sidebarState: nextState,
+                [`is${nextState}Expanded`]: !this.state[`is${nextState}Expanded`],
+            })
+        } else {
+            // swap to a different component
+            this.setState({
+                sidebarState: nextState,
+                isParticipantsExpanded: !this.state.isParticipantsExpanded,
+                isChatExpanded: !this.state.isChatExpanded,
             })
         }
     }
@@ -762,6 +776,8 @@ export default class VideoMain extends React.Component {
             peerConnectionTrackMapper,
             sidebarState,
             isSidebarClosing,
+            isParticipantsExpanded,
+            isChatExpanded,
         } = this.state
         const {
             allClientsInRoom,
@@ -795,8 +811,14 @@ export default class VideoMain extends React.Component {
                 <div className={style.topBar}>
                     <div>
                         <TopBarButton
+                            isExpanded={isParticipantsExpanded}
                             title={`Participants (${allClientsInRoom.length})`}
-                            handleClick={this.handleClickParticipants}
+                            handleClick={() => this.handleClickTopBarButton('Participants')}
+                        />
+                        <TopBarButton
+                            isExpanded={isChatExpanded}
+                            title={`Chat`}
+                            handleClick={() => this.handleClickTopBarButton('Chat')}
                         />
                     </div>
                     <div>
@@ -813,9 +835,10 @@ export default class VideoMain extends React.Component {
                             isSidebarClosing || sidebarState === '' ? style.closing : ''
                         }`}
                     >
-                        {sidebarState === 'participants' && (
+                        {sidebarState === 'Participants' && (
                             <ParticipantsList allClientsInRoom={allClientsInRoom} />
                         )}
+                        {sidebarState === 'Chat' && <div>CHAT</div>}
                     </div>
                     <BroadcastVideo otherClientsInRoom={otherClientsInRoom} />
                 </div>
