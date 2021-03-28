@@ -211,8 +211,11 @@
 .codeButton .tooltip {
     visibility: hidden;
     font-size: 1rem;
-    top: 2em;
-    left: -7em;
+}
+.clapButton .tooltip .bottom,
+.codeButton .tooltip .bottom {
+    top: 1.5em;
+    left: -0.5em;
 }
 .clapButton:hover .tooltip,
 .clapButton:focus .tooltip,

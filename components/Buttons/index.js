@@ -144,12 +144,19 @@ const TopBarButton = ({ title, isExpanded, handleClick }) => (
 
 const ClapButton = ({ handleClick }) => {
     return (
-        <button type="button" className={style.clapButton} onClick={handleClick}>
+        <button
+            type="button"
+            className={style.clapButton}
+            onClick={(e) => {
+                handleClick()
+                e.currentTarget.blur()
+            }}
+        >
             <span className={style.icon}>
                 <Image src="/clap.png" width="40px" height="40px" />
             </span>
             <span className={style.tooltip}>
-                <Tooltip message="Clap" />
+                <Tooltip message="Clap" className={style.bottom} />
             </span>
         </button>
     )
@@ -160,13 +167,16 @@ const CodeButton = ({ isCode, handleClick }) => {
         <button
             type="button"
             className={`${style.codeButton} ${isCode ? style.on : ''}`}
-            onClick={handleClick}
+            onClick={(e) => {
+                handleClick()
+                e.currentTarget.blur()
+            }}
         >
             <span className="">
                 <FontAwesomeIcon icon={faCode} />
             </span>
             <span className={style.tooltip}>
-                <Tooltip message="Code Format" />
+                <Tooltip message="Code" className={style.bottom} />
             </span>
         </button>
     )

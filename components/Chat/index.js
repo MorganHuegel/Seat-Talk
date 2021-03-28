@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import style from '../../styles/Components/Chat/Chat.module.css'
+import Image from 'next/image'
 import { ClapButton, CodeButton } from '../Buttons'
 
 const Chat = (props) => {
@@ -43,6 +44,37 @@ const Chat = (props) => {
                     className={style.input}
                     style={{ display: isCode ? 'none' : 'inline-block' }}
                 />
+                <div>
+                    <p className={style.submitInstructions}>
+                        Submit using{' '}
+                        {isCode && (
+                            <>
+                                Shift ({' '}
+                                <span className={style.shiftIcon}>
+                                    <Image
+                                        src="/shift key.jpeg"
+                                        alt="Shift Key"
+                                        width={12}
+                                        height={12}
+                                        layout="fixed"
+                                    />
+                                </span>{' '}
+                                ) +{' '}
+                            </>
+                        )}
+                        Enter ({' '}
+                        <span className={style.enterIcon}>
+                            <Image
+                                src="/enter key.jpeg"
+                                alt="Enter Key"
+                                width={12}
+                                height={12}
+                                layout="fixed"
+                            />
+                        </span>{' '}
+                        )
+                    </p>
+                </div>
                 <div className={style.btnContainer}>
                     <button>Emoji</button>
                     <CodeButton handleClick={handleClickCode} isCode={isCode} />
