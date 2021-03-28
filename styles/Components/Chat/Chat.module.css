@@ -11,3 +11,17 @@
     padding: 4px 7px;
     margin: 20px 0 10px 0;
 }
+
+.codeInput {
+    padding: 5px;
+    border: 1px solid black;
+    background-color: white;
+}
+.codeInput textarea {
+    width: 100%;
+    background-color: rgb(200, 200, 200);
+}
+
+.btnContainer {
+    margin-top: 10px;
+}
