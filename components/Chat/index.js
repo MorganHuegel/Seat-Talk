@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import style from '../../styles/Components/Chat/Chat.module.css'
 import Image from 'next/image'
+import prettier from 'prettier/standalone'
+import babelParser from 'prettier/parser-babel'
 import { ClapButton, CodeButton } from '../Buttons'
 
 const Chat = (props) => {
@@ -17,8 +19,16 @@ const Chat = (props) => {
 
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
+        try {
+            const formatted = prettier.format(codeInputValue, {
+                parser: 'babel',
+                plugins: [babelParser],
+            })
+            console.log('codeInput (formatted): ', formatted)
+        } catch (e) {
+            console.log('codeInput: ', codeInputValue)
+        }
         console.log('chatInput: ', chatInputValue)
-        console.log('codeInput: ', codeInputValue)
         setChatInputValue('')
         setCodeInputValue('')
     }
@@ -45,6 +55,7 @@ const Chat = (props) => {
         setIsCode((prevIsCode) => !prevIsCode)
     }
 
+    const newLines = codeInputValue.match(/\r\n|\n|\r/gm) || []
     return (
         <div className={style.container}>
             <div>Chat stuff</div>
@@ -54,7 +65,7 @@ const Chat = (props) => {
                         value={codeInputValue}
                         onChange={handleTypeCode}
                         onKeyDown={checkForSubmit}
-                        rows="1"
+                        rows={newLines.length + 1}
                     />
                 </div>
                 <input
