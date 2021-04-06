@@ -1,26 +1,40 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import style from '../../styles/Components/Chat/Chat.module.css'
 import Image from 'next/image'
 import { ClapButton, CodeButton } from '../Buttons'
 
 const Chat = (props) => {
-    const chatForm = useRef(null)
-    const chatInput = useRef(null)
-    const codeInput = useRef(null)
+    const [chatInputValue, setChatInputValue] = useState('')
+    const [codeInputValue, setCodeInputValue] = useState('')
     const [isCode, setIsCode] = useState(false)
+
+    // prevent Shift+Enter from actually typing new line character
+    useEffect(() => {
+        if (codeInputValue === '\n') {
+            setCodeInputValue('')
+        }
+    }, [codeInputValue])
 
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
-        console.log('chatIinput: ', chatInput.current.value)
-        console.log('codeInput: ', codeInput.current.value)
-        chatInput.current.value = ''
-        codeInput.current.value = ''
+        console.log('chatInput: ', chatInputValue)
+        console.log('codeInput: ', codeInputValue)
+        setChatInputValue('')
+        setCodeInputValue('')
     }
 
     function checkForSubmit(e) {
-        if (e.code === 'Enter' && e.shiftKey) {
+        if (e.code === 'Enter' && (!isCode || e.shiftKey)) {
             handleChatSubmit()
         }
+    }
+
+    function handleTypeCode(e) {
+        setCodeInputValue(e.currentTarget.value)
+    }
+
+    function handleTypeChat(e) {
+        setChatInputValue(e.currentTarget.value)
     }
 
     function handleClap() {
@@ -34,12 +48,18 @@ const Chat = (props) => {
     return (
         <div className={style.container}>
             <div>Chat stuff</div>
-            <form onSubmit={handleChatSubmit} ref={chatForm}>
+            <form onSubmit={handleChatSubmit}>
                 <div className={style.codeInput} style={{ display: isCode ? 'block' : 'none' }}>
-                    <textarea ref={codeInput} onKeyDown={checkForSubmit} />
+                    <textarea
+                        value={codeInputValue}
+                        onChange={handleTypeCode}
+                        onKeyDown={checkForSubmit}
+                        rows="1"
+                    />
                 </div>
                 <input
-                    ref={chatInput}
+                    onChange={handleTypeChat}
+                    value={chatInputValue}
                     type="text"
                     className={style.input}
                     style={{ display: isCode ? 'none' : 'inline-block' }}
