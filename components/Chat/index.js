@@ -52,12 +52,33 @@ const Chat = (props) => {
     }
 
     function renderMessage(msg) {
+        const date = new Date(msg.createdAt)
+        const displayDate =
+            (date.getHours() % 12) +
+            ':' +
+            (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes())
         return (
-            <div key={msg.id}>
-                <p>
-                    {msg.createdAt} {msg.senderName}
+            <div key={msg.id} className={style.messageContainer}>
+                <p className={style.messageMeta}>
+                    {displayDate} {msg.senderName}
                 </p>
-                <p>{msg.message}</p>
+                <div className={`${style.message} ${msg.type === 'code' ? style.code : ''}`}>
+                    {msg.type === 'code' ? (
+                        msg.message
+                            .split(/\r\n|\r|\n/g)
+                            .filter((txt) => txt) // remove empty strings
+                            // for code indentation, replace back-to-back spaces with &nbsp;&nbsp;
+                            .map((line, i) => (
+                                <p key={i}>
+                                    {[...line.replace(/\s\s/g, '\t')].map((letter) =>
+                                        letter === '\t' ? <span>&nbsp;&nbsp;</span> : letter
+                                    )}
+                                </p>
+                            ))
+                    ) : (
+                        <p>{msg.message}</p>
+                    )}
+                </div>
             </div>
         )
     }

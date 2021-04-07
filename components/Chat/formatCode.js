@@ -6,7 +6,7 @@ import cssParser from 'prettier/parser-postcss'
 
 // all available parsers here: https://prettier.io/docs/en/options.html#parser
 export default function formatCode(codeString) {
-    let parsers = ['babel', 'json', 'json5', 'css', 'sass', 'graphql', 'markdown', 'html']
+    let parsers = ['json', 'json5', 'babel', 'css', 'sass', 'graphql', 'markdown', 'html']
     for (let i = 0; i < parsers.length; i++) {
         try {
             codeString = prettier.format(codeString, {

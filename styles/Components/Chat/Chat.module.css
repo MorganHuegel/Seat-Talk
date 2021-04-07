@@ -43,3 +43,35 @@
 .btnContainer {
     margin-top: 15px;
 }
+
+.messageContainer {
+    margin: 14px 0 0 0;
+}
+.messageMeta {
+    font-size: 10px;
+    margin: 2px 0;
+    font-weight: bold;
+}
+.message {
+    font-size: 14px;
+    margin: 2px 0;
+}
+.message.code {
+    background-color: rgb(220, 220, 220);
+    padding: 2px;
+    font-family: monospace;
+    border-radius: 5px;
+    overflow-x: scroll;
+    white-space: nowrap;
+    /* Hide scrollbar but keep functionality */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+/* Hide scrollbar for Chrome, Safari and Opera */
+.message.code::-webkit-scrollbar {
+    display: none;
+}
+
+.message p {
+    margin: 2px 0;
+}
