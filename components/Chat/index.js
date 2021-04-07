@@ -1,11 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import style from '../../styles/Components/Chat/Chat.module.css'
 import Image from 'next/image'
-import prettier from 'prettier/standalone'
-import babelParser from 'prettier/parser-babel'
-import graphqlParser from 'prettier/parser-graphql'
-import htmlParser from 'prettier/parser-html'
-import cssParser from 'prettier/parser-postcss'
+import formatCode from './formatCode.js'
 import { ClapButton, CodeButton } from '../Buttons'
 
 const Chat = (props) => {
@@ -22,25 +18,8 @@ const Chat = (props) => {
 
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
-        try {
-            const formatted = prettier.format(codeInputValue, {
-                parser: 'babel',
-                plugins: [babelParser, graphqlParser, htmlParser, cssParser],
-            })
-            console.log('codeInput (formatted babel): ', formatted)
-        } catch (e) {
-            // if javascript formatter didn't work, maybe it's graphql??
-            try {
-                const formatted = prettier.format(codeInputValue, {
-                    parser: 'graphql',
-                    plugins: [babelParser, graphqlParser, htmlParser, cssParser],
-                })
-                console.log('codeInput (formatted gql): ', formatted)
-            } catch (e) {
-                // meh, we tried :(
-            }
-        }
-        console.log('codeInput: ', codeInputValue)
+        const formattedCodeInput = formatCode(codeInputValue)
+        console.log('codeInput: ', formattedCodeInput)
         console.log('chatInput: ', chatInputValue)
         setChatInputValue('')
         setCodeInputValue('')
