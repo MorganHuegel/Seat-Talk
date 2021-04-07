@@ -3,6 +3,9 @@ import style from '../../styles/Components/Chat/Chat.module.css'
 import Image from 'next/image'
 import prettier from 'prettier/standalone'
 import babelParser from 'prettier/parser-babel'
+import graphqlParser from 'prettier/parser-graphql'
+import htmlParser from 'prettier/parser-html'
+import cssParser from 'prettier/parser-postcss'
 import { ClapButton, CodeButton } from '../Buttons'
 
 const Chat = (props) => {
@@ -22,12 +25,22 @@ const Chat = (props) => {
         try {
             const formatted = prettier.format(codeInputValue, {
                 parser: 'babel',
-                plugins: [babelParser],
+                plugins: [babelParser, graphqlParser, htmlParser, cssParser],
             })
-            console.log('codeInput (formatted): ', formatted)
+            console.log('codeInput (formatted babel): ', formatted)
         } catch (e) {
-            console.log('codeInput: ', codeInputValue)
+            // if javascript formatter didn't work, maybe it's graphql??
+            try {
+                const formatted = prettier.format(codeInputValue, {
+                    parser: 'graphql',
+                    plugins: [babelParser, graphqlParser, htmlParser, cssParser],
+                })
+                console.log('codeInput (formatted gql): ', formatted)
+            } catch (e) {
+                // meh, we tried :(
+            }
         }
+        console.log('codeInput: ', codeInputValue)
         console.log('chatInput: ', chatInputValue)
         setChatInputValue('')
         setCodeInputValue('')
