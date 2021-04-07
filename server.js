@@ -16,6 +16,7 @@ const {
     handleCandidate,
     handleAddedPeerConnectionTrack,
     handleRenegotiate,
+    handleChat,
 } = require('./helpers/socket')
 const { Log } = require('./helpers/Logger')
 io.on('connect', (socket) => {
@@ -48,6 +49,7 @@ io.on('connect', (socket) => {
     socket.on('heartbeatHeroku', () => {
         Log(`socket with ID ${socket.id} preventing Heroku from sleeping`)
     })
+    socket.on('chat', (msg) => handleChat(socket, io, msg))
     socket.on('disconnect', (reason) => {
         if (reason) {
             Log(`socket with ID ${socket.id} disconnected because of "${reason}."`)

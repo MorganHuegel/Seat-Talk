@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import style from '../../styles/Components/Chat/Chat.module.css'
 import Image from 'next/image'
 import formatCode from './formatCode.js'
 import { ClapButton, CodeButton } from '../Buttons'
 
 const Chat = (props) => {
+    const { socket, chatMessages, clientDatabaseId } = props
     const [chatInputValue, setChatInputValue] = useState('')
     const [codeInputValue, setCodeInputValue] = useState('')
     const [isCode, setIsCode] = useState(false)
@@ -19,8 +20,11 @@ const Chat = (props) => {
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
         const formattedCodeInput = formatCode(codeInputValue)
-        console.log('codeInput: ', formattedCodeInput)
-        console.log('chatInput: ', chatInputValue)
+        socket.emit('chat', {
+            type: isCode ? 'code' : 'input',
+            message: isCode ? formattedCodeInput : chatInputValue,
+            fromDbId: clientDatabaseId,
+        })
         setChatInputValue('')
         setCodeInputValue('')
     }
@@ -47,10 +51,21 @@ const Chat = (props) => {
         setIsCode((prevIsCode) => !prevIsCode)
     }
 
+    function renderMessage(msg) {
+        return (
+            <div key={msg.id}>
+                <p>
+                    {msg.createdAt} {msg.senderName}
+                </p>
+                <p>{msg.message}</p>
+            </div>
+        )
+    }
+
     const newLines = codeInputValue.match(/\r\n|\n|\r/gm) || []
     return (
         <div className={style.container}>
-            <div>Chat stuff</div>
+            <div>{chatMessages.map(renderMessage)}</div>
             <form onSubmit={handleChatSubmit}>
                 <div className={style.codeInput} style={{ display: isCode ? 'block' : 'none' }}>
                     <textarea

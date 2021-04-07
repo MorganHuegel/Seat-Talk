@@ -43,6 +43,7 @@ export default class VideoMain extends React.Component {
             isSidebarClosing: false,
             isParticipantsExpanded: false,
             isChatExpanded: false,
+            chatMessages: [],
         }
 
         this.ownVideo = React.createRef()
@@ -292,6 +293,13 @@ export default class VideoMain extends React.Component {
                 // will call restartIce() in iceconnectionstatechange
                 console.error('caught error adding ICE candidate', e)
             }
+        })
+
+        socket.on('chat', (msg) => {
+            const senderName = this.props.allClientsInRoom.find(
+                (c) => c.socket_id === msg.fromSocket
+            ).display_name
+            this.setState({ chatMessages: [...this.state.chatMessages, { ...msg, senderName }] })
         })
     }
 
@@ -779,6 +787,7 @@ export default class VideoMain extends React.Component {
             isSidebarClosing,
             isParticipantsExpanded,
             isChatExpanded,
+            chatMessages,
         } = this.state
         const {
             allClientsInRoom,
@@ -839,7 +848,9 @@ export default class VideoMain extends React.Component {
                         {sidebarState === 'Participants' && (
                             <ParticipantsList allClientsInRoom={allClientsInRoom} />
                         )}
-                        {sidebarState === 'Chat' && <Chat />}
+                        {sidebarState === 'Chat' && (
+                            <Chat {...this.props} chatMessages={chatMessages} />
+                        )}
                     </div>
                     <BroadcastVideo otherClientsInRoom={otherClientsInRoom} />
                 </div>

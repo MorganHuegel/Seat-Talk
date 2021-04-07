@@ -186,6 +186,20 @@ async function handleRenegotiate(socket, io, toSocketId) {
     // io.to(toSocketId).emit('watcherRequest', { requestingSocketId: socket.id })
 }
 
+async function handleChat(socket, io, msg) {
+    const { type, message, fromDbId } = msg
+    const chat = await knex('chats').insert({ type, message, client_pk: fromDbId }).returning('*')
+    const serializedMsg = {
+        id: chat[0].id,
+        clientPk: chat[0].client_pk,
+        type: chat[0].type,
+        message: chat[0].message,
+        createdAt: chat[0].created_at,
+        fromSocket: socket.id,
+    }
+    socket.emit('chat', serializedMsg)
+}
+
 module.exports = {
     handleConnect,
     handleJoinRoom,
@@ -197,4 +211,5 @@ module.exports = {
     handleCandidate,
     handleAddedPeerConnectionTrack,
     handleRenegotiate,
+    handleChat,
 }

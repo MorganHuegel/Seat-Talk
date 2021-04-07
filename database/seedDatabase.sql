@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS room_clients;
 DROP TABLE IF EXISTS clients;
 DROP TABLE IF EXISTS logs;
+DROP TABLE IF EXISTS chats;
 
 CREATE TABLE rooms(
     id serial PRIMARY KEY, 
@@ -42,6 +43,16 @@ CREATE TABLE logs(
   id serial PRIMARY KEY,
   log_message VARCHAR,
   created_at timestamptz default now()
+);
+CREATE TABLE chats(
+  id serial PRIMARY KEY,
+  client_pk INT NOT NULL,
+  message VARCHAR,
+  type VARCHAR,
+  created_at timestamptz default now(),
+  CONSTRAINT fk_client
+      FOREIGN KEY(client_pk) 
+	    REFERENCES clients(id)
 );
 
 INSERT INTO rooms(room_id, opened_at, closed_at)
