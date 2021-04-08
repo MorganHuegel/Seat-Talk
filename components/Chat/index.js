@@ -5,7 +5,7 @@ import formatCode from './formatCode.js'
 import { ClapButton, CodeButton } from '../Buttons'
 
 const Chat = (props) => {
-    const { socket, chatMessages, clientDatabaseId } = props
+    const { socket, chatMessages, clientDatabaseId, roomId } = props
     const [chatInputValue, setChatInputValue] = useState('')
     const [codeInputValue, setCodeInputValue] = useState('')
     const [isCode, setIsCode] = useState(false)
@@ -20,11 +20,15 @@ const Chat = (props) => {
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
         const formattedCodeInput = formatCode(codeInputValue)
-        socket.emit('chat', {
-            type: isCode ? 'code' : 'input',
-            message: isCode ? formattedCodeInput : chatInputValue,
-            fromDbId: clientDatabaseId,
-        })
+        socket.emit(
+            'chat',
+            {
+                type: isCode ? 'code' : 'input',
+                message: isCode ? formattedCodeInput : chatInputValue,
+                fromDbId: clientDatabaseId,
+            },
+            roomId
+        )
         setChatInputValue('')
         setCodeInputValue('')
     }

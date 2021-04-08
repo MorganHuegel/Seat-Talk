@@ -15,7 +15,6 @@ const {
     handleAnswer,
     handleCandidate,
     handleAddedPeerConnectionTrack,
-    handleRenegotiate,
     handleChat,
 } = require('./helpers/socket')
 const { Log } = require('./helpers/Logger')
@@ -42,14 +41,13 @@ io.on('connect', (socket) => {
     socket.on('addedPeerConnectionTrack', ({ trackId, clients }) =>
         handleAddedPeerConnectionTrack(socket, io, trackId, clients)
     )
-    socket.on('renegotiate', ({ toSocketId }) => handleRenegotiate(socket, io, toSocketId))
     socket.on('connect_error', (err) => {
         Log(`socket with ID ${socket.id} has connect_error: "${err.message}."`)
     })
     socket.on('heartbeatHeroku', () => {
         Log(`socket with ID ${socket.id} preventing Heroku from sleeping`)
     })
-    socket.on('chat', (msg) => handleChat(socket, io, msg))
+    socket.on('chat', (msg, roomId) => handleChat(socket, io, msg, roomId))
     socket.on('disconnect', (reason) => {
         if (reason) {
             Log(`socket with ID ${socket.id} disconnected because of "${reason}."`)
