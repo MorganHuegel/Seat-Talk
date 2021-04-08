@@ -66,7 +66,7 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId, displayName)
             knex('clients').where('id', '=', client_pk).update({ display_name: displayName }),
             knex('room_clients').insert({ room_pk, client_pk }),
         ])
-        const [allClientsInRoom, chatMessages] = await Promise.all([
+        let [allClientsInRoom, chatMessages] = await Promise.all([
             _getAllClientsInRoom(room_pk),
             knex
                 .select('chats.*')
@@ -74,9 +74,21 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId, displayName)
                 .join('chats', 'room_clients.client_pk', '=', 'chats.client_pk')
                 .where({ room_pk }),
         ])
+
         if (allClientsInRoom.length < 1) {
             throw new Error('No clients found in room ' + roomId)
         }
+        // serialize message structure
+        const clientIdNameMapper = {}
+        allClientsInRoom.forEach((c) => (clientIdNameMapper[c.id] = c.display_name))
+        chatMessages = chatMessages.map((msg) => ({
+            id: msg.id,
+            clientPk: msg.client_pk,
+            type: msg.type,
+            message: msg.message,
+            createdAt: msg.created_at,
+            senderName: clientIdNameMapper[msg.client_pk],
+        }))
         io.to(roomId).emit('newJoin', { allClientsInRoom, chatMessages, newSocketId: socket.id })
     } catch (error) {
         _handleErrors(socket, error, 'handleJoinRoom')
