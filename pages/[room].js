@@ -14,6 +14,7 @@ class Room extends React.Component {
             isLoading: true,
             allClientsInRoom: [],
             clientDatabaseId: null,
+            chatMessages: [],
         }
         this.socket = null
         this.heartbeatHeroku = null
@@ -27,10 +28,12 @@ class Room extends React.Component {
                 this.socket.emit('joinRoom', { roomId, clientDatabaseId, displayName })
             })
         })
-        this.socket.on('newJoin', ({ allClientsInRoom, newSocketId }) => {
+        this.socket.on('newJoin', ({ allClientsInRoom, chatMessages, newSocketId }) => {
             this.setState({ allClientsInRoom }, () => {
                 if (this.socket.id === newSocketId) {
-                    this.socket.emit('watcherJoin', { roomId, requestingSocketId: newSocketId })
+                    this.setState({ chatMessages }, () => {
+                        this.socket.emit('watcherJoin', { roomId, requestingSocketId: newSocketId })
+                    })
                 }
             })
         })
@@ -55,15 +58,19 @@ class Room extends React.Component {
                 ),
             })
         })
+        this.socket.on('chat', (msg) => {
+            const senderName = this.state.allClientsInRoom.find(
+                (c) => c.socket_id === msg.fromSocket
+            ).display_name
+            this.setState({ chatMessages: [...this.state.chatMessages, { ...msg, senderName }] })
+        })
 
         // Every 5 minutes, ping the server to keep dynos from falling asleep.
         // Free Heroku plan has dynos go to sleep after 30 minutes of inactivity,
         // causing reconnection bug.
         this.heartbeatHeroku = setInterval(() => {
             this.socket.emit('heartbeatHeroku')
-            return fetch(APP_URL, { method: 'GET' }).then((res) => {
-                console.log('Keeping heroku awake :)')
-            })
+            return fetch(APP_URL, { method: 'GET' }).then((res) => {})
         }, 1000 * 60 * 5)
 
         this.setState({ isLoading: false })
@@ -75,7 +82,7 @@ class Room extends React.Component {
     }
 
     render() {
-        const { errorMessage, isLoading, allClientsInRoom } = this.state
+        const { errorMessage, isLoading, allClientsInRoom, chatMessages } = this.state
         if (errorMessage) {
             return <p>{errorMessage}</p>
         } else if (isLoading) {
@@ -90,6 +97,7 @@ class Room extends React.Component {
                     roomId={this.props.roomId}
                     clientDatabaseId={this.state.clientDatabaseId}
                     allClientsInRoom={allClientsInRoom}
+                    chatMessages={chatMessages}
                 />
             )
         )

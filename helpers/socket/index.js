@@ -62,13 +62,22 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId, displayName)
 
         socket.join(roomId)
         const client_pk = clientDatabaseId
-        await knex('clients').where('id', '=', client_pk).update({ display_name: displayName })
-        await knex('room_clients').insert({ room_pk, client_pk })
-        const allClientsInRoom = await _getAllClientsInRoom(room_pk)
+        await Promise.all([
+            knex('clients').where('id', '=', client_pk).update({ display_name: displayName }),
+            knex('room_clients').insert({ room_pk, client_pk }),
+        ])
+        const [allClientsInRoom, chatMessages] = await Promise.all([
+            _getAllClientsInRoom(room_pk),
+            knex
+                .select('chats.*')
+                .table('room_clients')
+                .join('chats', 'room_clients.client_pk', '=', 'chats.client_pk')
+                .where({ room_pk }),
+        ])
         if (allClientsInRoom.length < 1) {
             throw new Error('No clients found in room ' + roomId)
         }
-        io.to(roomId).emit('newJoin', { allClientsInRoom, newSocketId: socket.id })
+        io.to(roomId).emit('newJoin', { allClientsInRoom, chatMessages, newSocketId: socket.id })
     } catch (error) {
         _handleErrors(socket, error, 'handleJoinRoom')
     }

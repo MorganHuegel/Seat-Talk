@@ -1,9 +1,17 @@
 .container {
-    padding: 20px;
+    padding: 20px 0 20px 20px; /* leave room for scrollbar on right*/
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 100%;
+    height: calc(100% - 4px);
+}
+.container > div:first-child {
+    padding-right: 20px;
+    max-height: calc(100% - 110px);
+    overflow-y: scroll;
+}
+.container > form {
+    padding-right: 20px;
 }
 
 .input {
