@@ -41,6 +41,7 @@ export default class VideoMain extends React.Component {
 
             sidebarState: '',
             isSidebarClosing: false,
+            isSidebarOpening: false,
             isParticipantsExpanded: false,
             isChatExpanded: false,
         }
@@ -751,10 +752,18 @@ export default class VideoMain extends React.Component {
             })
         } else if (!this.state.sidebarState) {
             // open it
-            this.setState({
-                sidebarState: nextState,
-                [`is${nextState}Expanded`]: !this.state[`is${nextState}Expanded`],
-            })
+            this.setState(
+                {
+                    isSidebarOpening: true,
+                    sidebarState: nextState,
+                    [`is${nextState}Expanded`]: !this.state[`is${nextState}Expanded`],
+                },
+                () => {
+                    setTimeout(() => {
+                        this.setState({ isSidebarOpening: false })
+                    }, sidebarTransitionTime)
+                }
+            )
         } else {
             // swap to a different component
             this.setState({
@@ -777,6 +786,7 @@ export default class VideoMain extends React.Component {
             peerConnectionTrackMapper,
             sidebarState,
             isSidebarClosing,
+            isSidebarOpening,
             isParticipantsExpanded,
             isChatExpanded,
         } = this.state
@@ -832,7 +842,11 @@ export default class VideoMain extends React.Component {
                 </div>
                 <div className={style.ownVideoRow}>
                     <div
-                        style={{ transition: `flex-basis ${sidebarTransitionTime}ms linear` }}
+                        style={{
+                            transition: `flex-basis ${sidebarTransitionTime}ms linear`,
+                            overflowX: isSidebarClosing || isSidebarOpening ? 'hidden' : 'initial',
+                            whiteSpace: isSidebarClosing || isSidebarOpening ? 'nowrap' : 'initial',
+                        }}
                         className={`${style.sidebar} ${
                             isSidebarClosing || sidebarState === '' ? style.closing : ''
                         }`}
