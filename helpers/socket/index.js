@@ -1,5 +1,6 @@
 const { knex } = require('../../database/connectToDb')
 const { Log } = require('../Logger')
+const xss = require('xss')
 
 function _handleErrors(socket, err, functionName) {
     Log(`ERROR in ${functionName}: ${err}`)
@@ -204,7 +205,11 @@ async function handleAddedPeerConnectionTrack(socket, io, trackId, clients) {
 }
 
 async function handleChat(socket, io, msg, roomId) {
-    const { type, message, fromDbId } = msg
+    let { type, message, fromDbId } = msg
+    // normal 'input' messages use dangerouslySetInnerHTML to render
+    if (message.type === 'input') {
+        message = xss(message)
+    }
     const chat = await knex('chats').insert({ type, message, client_pk: fromDbId }).returning('*')
     const serializedMsg = {
         id: chat[0].id,

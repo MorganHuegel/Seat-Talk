@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import style from '../../styles/Components/Chat/Chat.module.css'
 import Image from 'next/image'
-import formatCode from './formatCode.js'
+import { formatCode, formatInput } from './helpers.js'
 import { ClapButton, CodeButton } from '../Buttons'
 
 const Chat = (props) => {
@@ -19,12 +19,19 @@ const Chat = (props) => {
 
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
-        const formattedCodeInput = formatCode(codeInputValue)
+
+        let message
+        if (isCode) {
+            message = formatCode(codeInputValue)
+        } else {
+            message = formatInput(chatInputValue)
+        }
+
         socket.emit(
             'chat',
             {
                 type: isCode ? 'code' : 'input',
-                message: isCode ? formattedCodeInput : chatInputValue,
+                message,
                 fromDbId: clientDatabaseId,
             },
             roomId
@@ -78,6 +85,7 @@ const Chat = (props) => {
                 </div>
             )
         }
+
         return (
             <div key={msg.id} className={style.messageContainer}>
                 <p className={style.messageMeta}>
@@ -97,7 +105,10 @@ const Chat = (props) => {
                                 </p>
                             ))
                     ) : (
-                        <p>{msg.message}</p>
+                        <p
+                            dangerouslySetInnerHTML={{ __html: msg.message }}
+                            className={style.normalMessage}
+                        />
                     )}
                 </div>
             </div>

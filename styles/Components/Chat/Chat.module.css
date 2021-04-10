@@ -86,3 +86,7 @@
 .message p {
     margin: 2px 0;
 }
+
+.message .normalMessage {
+    word-break: break-word;
+}
