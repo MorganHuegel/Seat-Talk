@@ -33,6 +33,7 @@ export default function Home() {
         <div className={style.page}>
             <Head>
                 <title>Seat Talk</title>
+                <meta charset="UTF-8" />
                 <link rel="icon" href="/favicon.ico" />
                 <link rel="preconnect" href="https://fonts.gstatic.com" />
                 <link

@@ -3,6 +3,7 @@ import style from '../../styles/Components/Chat/Chat.module.css'
 import Image from 'next/image'
 import { formatCode, formatInput } from './helpers.js'
 import { ClapButton, CodeButton } from '../Buttons'
+import EmojiPicker from '../EmojiPicker'
 
 const Chat = (props) => {
     const { socket, chatMessages, clientDatabaseId, roomId } = props
@@ -68,6 +69,10 @@ const Chat = (props) => {
 
     function handleClickCode() {
         setIsCode((prevIsCode) => !prevIsCode)
+    }
+
+    function handleSelectEmoji(e, unicode) {
+        console.log(unicode)
     }
 
     function renderMessage(msg) {
@@ -167,7 +172,7 @@ const Chat = (props) => {
                     </p>
                 </div>
                 <div className={style.btnContainer}>
-                    <button>Emoji</button>
+                    <EmojiPicker handleSelectEmoji={handleSelectEmoji} />
                     <CodeButton handleClick={handleClickCode} isCode={isCode} />
                     <ClapButton handleClick={handleClap} />
                 </div>

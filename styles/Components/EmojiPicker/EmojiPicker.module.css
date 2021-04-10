@@ -1,0 +1,61 @@
+.relative {
+    position: relative;
+}
+
+.button {
+    border: none;
+    background: none;
+    border-radius: 80%;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+.button:hover,
+.button:focus {
+    cursor: pointer;
+    background: rgb(255, 255, 255);
+}
+
+.button .tooltip {
+    visibility: hidden;
+    font-size: 1rem;
+}
+.button .tooltip .bottom {
+    top: 1.2em;
+    left: -0.8em;
+}
+.button:hover .tooltip,
+.button:focus .tooltip {
+    visibility: visible;
+}
+
+.selectContainer {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    bottom: 83px;
+    border-radius: 10px;
+    background: rgb(200, 200, 200);
+    border: 1px solid rgb(100, 100, 100);
+    padding: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 24px;
+}
+
+.emoji {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+}
+.emoji:focus,
+.emoji:hover {
+    background: rgb(230, 230, 230);
+    cursor: pointer;
+}
