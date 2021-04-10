@@ -866,6 +866,9 @@ export default class VideoMain extends React.Component {
                     </button>
                 </div>
                 <div className={style.buttonContainer}>
+                    <audio id="audio-clap" style={{ display: 'none' }}>
+                        <source src="/sounds/clap.mp3" type="audio/mp3" />
+                    </audio>
                     <AudioButton
                         handleClick={this.handleClickAudio}
                         isStreaming={!!audio_track_id}

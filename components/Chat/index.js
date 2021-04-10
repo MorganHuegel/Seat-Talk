@@ -48,7 +48,15 @@ const Chat = (props) => {
     }
 
     function handleClap() {
-        console.log('clap')
+        socket.emit(
+            'chat',
+            {
+                type: 'clap',
+                message: '',
+                fromDbId: clientDatabaseId,
+            },
+            roomId
+        )
     }
 
     function handleClickCode() {
@@ -61,6 +69,15 @@ const Chat = (props) => {
             (date.getHours() % 12) +
             ':' +
             (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes())
+        if (msg.type === 'clap') {
+            return (
+                <div key={msg.id} className={style.messageContainer}>
+                    <p className={`${style.messageMeta} ${style.sound}`}>
+                        {displayDate} {msg.senderName} clapped
+                    </p>
+                </div>
+            )
+        }
         return (
             <div key={msg.id} className={style.messageContainer}>
                 <p className={style.messageMeta}>

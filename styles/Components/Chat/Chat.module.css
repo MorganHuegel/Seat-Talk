@@ -53,12 +53,15 @@
 }
 
 .messageContainer {
-    margin: 16px 0 0 0;
+    margin: 20px 0 0 0;
 }
 .messageMeta {
     font-size: 14px;
     margin: 2px 0;
     font-weight: bold;
+}
+.messageMeta.sound {
+    font-style: italic;
 }
 .message {
     font-size: 14px;

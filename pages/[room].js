@@ -62,7 +62,20 @@ class Room extends React.Component {
             const senderName = this.state.allClientsInRoom.find(
                 (c) => c.socket_id === msg.fromSocket
             ).display_name
-            this.setState({ chatMessages: [...this.state.chatMessages, { ...msg, senderName }] })
+            this.setState(
+                { chatMessages: [...this.state.chatMessages, { ...msg, senderName }] },
+                () => {
+                    if (msg.type === 'clap') {
+                        const clapper = document.getElementById('audio-clap')
+                        if (clapper.paused) {
+                            clapper.play()
+                        } else {
+                            clapper.currentTime = 0
+                            clapper.play()
+                        }
+                    }
+                }
+            )
         })
 
         // Every 5 minutes, ping the server to keep dynos from falling asleep.
