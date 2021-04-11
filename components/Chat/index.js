@@ -18,6 +18,12 @@ const Chat = (props) => {
         }
     }, [codeInputValue])
 
+    useEffect(() => {
+        if (chatInputValue === '') {
+            setChatInnerHtml()
+        }
+    }, [chatInputValue])
+
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
 
@@ -43,6 +49,7 @@ const Chat = (props) => {
 
     function checkForSubmit(e) {
         if (e.code === 'Enter' && (!isCode || e.shiftKey)) {
+            e.preventDefault()
             handleChatSubmit()
         }
     }
@@ -52,7 +59,11 @@ const Chat = (props) => {
     }
 
     function handleTypeChat(e) {
-        setChatInputValue(e.currentTarget.value)
+        setChatInputValue(e.currentTarget.textContent)
+    }
+
+    function setChatInnerHtml() {
+        document.getElementById('chat-input').innerHTML = chatInputValue
     }
 
     function handleClap() {
@@ -71,8 +82,9 @@ const Chat = (props) => {
         setIsCode((prevIsCode) => !prevIsCode)
     }
 
-    function handleSelectEmoji(e, unicode) {
-        console.log(unicode)
+    function handleSelectEmoji(e, emoji) {
+        setChatInputValue((prevState) => prevState + emoji.htmlCode)
+        setChatInnerHtml()
     }
 
     function renderMessage(msg) {
@@ -96,7 +108,11 @@ const Chat = (props) => {
                 <p className={style.messageMeta}>
                     {displayDate} {msg.senderName}
                 </p>
-                <div className={`${style.message} ${msg.type === 'code' ? style.code : ''}`}>
+                <div
+                    className={`${style.message} ${
+                        msg.type === 'code' ? style.code + ' ' + style.noScrollBar : ''
+                    }`}
+                >
                     {msg.type === 'code' ? (
                         msg.message
                             .split(/\r\n|\r|\n/g)
@@ -133,12 +149,14 @@ const Chat = (props) => {
                         rows={newLines.length + 1}
                     />
                 </div>
-                <input
-                    onChange={handleTypeChat}
-                    value={chatInputValue}
-                    type="text"
-                    className={style.input}
-                    style={{ display: isCode ? 'none' : 'inline-block' }}
+                <div
+                    contentEditable
+                    className={`${style.input} ${style.noScrollBar}`}
+                    id="chat-input"
+                    style={{ display: isCode ? 'none' : 'flex' }}
+                    onInput={handleTypeChat}
+                    onKeyDown={checkForSubmit}
+                    onBlur={setChatInnerHtml}
                 />
                 <div>
                     <p className={style.submitInstructions}>

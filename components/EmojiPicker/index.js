@@ -34,7 +34,6 @@ const EmojiPicker = ({ handleSelectEmoji, isDisabled }) => {
 
     useEffect(() => {
         function closeOnClickElsewhere(e) {
-            console.log('firing')
             let node = e.target
             while (node.parentNode && node.tagName !== 'HTML') {
                 if (node.classList.contains(style.selectContainer)) {
