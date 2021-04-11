@@ -33,16 +33,37 @@
 
 .selectContainer {
     position: absolute;
-    width: 200px;
+    width: 208px;
     height: 200px;
-    bottom: 83px;
+    bottom: 85px;
     border-radius: 10px;
     background: rgb(200, 200, 200);
     border: 1px solid rgb(100, 100, 100);
-    padding: 15px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 24px;
+}
+
+.selectContainer .options {
     display: flex;
     flex-wrap: wrap;
-    font-size: 24px;
+    flex-basis: 123px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    overflow-y: scroll;
+}
+.selectContainer .preview {
+    border-top: 1px solid rgb(100, 100, 100);
+    font-size: 16px;
+}
+.selectContainer .preview span {
+    font-size: 40px;
+}
+.selectContainer .placeholdPreview {
+    display: inline-block;
+    height: 50px;
 }
 
 .emoji {

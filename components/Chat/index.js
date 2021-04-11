@@ -172,7 +172,7 @@ const Chat = (props) => {
                     </p>
                 </div>
                 <div className={style.btnContainer}>
-                    <EmojiPicker handleSelectEmoji={handleSelectEmoji} />
+                    <EmojiPicker handleSelectEmoji={handleSelectEmoji} isDisabled={isCode} />
                     <CodeButton handleClick={handleClickCode} isCode={isCode} />
                     <ClapButton handleClick={handleClap} />
                 </div>
