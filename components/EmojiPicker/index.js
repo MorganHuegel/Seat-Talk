@@ -81,6 +81,7 @@ const EmojiPicker = ({ handleSelectEmoji, isDisabled }) => {
                     <div className={style.options}>
                         {options.map((option) => (
                             <span
+                                key={option.unicode}
                                 className={style.emoji}
                                 dangerouslySetInnerHTML={{ __html: option.htmlCode }}
                                 onClick={(e) => handleClickEmoji(e, option)}

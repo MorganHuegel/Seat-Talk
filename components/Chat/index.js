@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import style from '../../styles/Components/Chat/Chat.module.css'
 import Image from 'next/image'
 import { formatCode, formatInput } from './helpers.js'
@@ -10,6 +10,7 @@ const Chat = (props) => {
     const [chatInputValue, setChatInputValue] = useState('')
     const [codeInputValue, setCodeInputValue] = useState('')
     const [isCode, setIsCode] = useState(false)
+    const inputEl = useRef(null)
 
     // prevent Shift+Enter from actually typing new line character
     useEffect(() => {
@@ -19,7 +20,16 @@ const Chat = (props) => {
     }, [codeInputValue])
 
     useEffect(() => {
+        // if chat message was sent, reset innerHTML
         if (chatInputValue === '') {
+            setChatInnerHtml()
+        }
+        // if emoji was selected, update immediately
+        const emojiRegex = /&#x[0-9A-Fa-f]+;/g
+        const selectedEmojis = chatInputValue.match(emojiRegex) || []
+        const innerText = inputEl.current.innerText
+        const shownEmojis = innerText.match(emojiRegex) || []
+        if (selectedEmojis.length !== shownEmojis.length) {
             setChatInnerHtml()
         }
     }, [chatInputValue])
@@ -63,7 +73,7 @@ const Chat = (props) => {
     }
 
     function setChatInnerHtml() {
-        document.getElementById('chat-input').innerHTML = chatInputValue
+        inputEl.current.innerHTML = chatInputValue
     }
 
     function handleClap() {
@@ -84,7 +94,7 @@ const Chat = (props) => {
 
     function handleSelectEmoji(e, emoji) {
         setChatInputValue((prevState) => prevState + emoji.htmlCode)
-        setChatInnerHtml()
+        inputEl.current.focus()
     }
 
     function renderMessage(msg) {
@@ -157,6 +167,7 @@ const Chat = (props) => {
                     onInput={handleTypeChat}
                     onKeyDown={checkForSubmit}
                     onBlur={setChatInnerHtml}
+                    ref={inputEl}
                 />
                 <div>
                     <p className={style.submitInstructions}>
