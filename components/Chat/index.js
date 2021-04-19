@@ -10,7 +10,11 @@ const Chat = (props) => {
     const [chatInputValue, setChatInputValue] = useState('')
     const [codeInputValue, setCodeInputValue] = useState('')
     const [isCode, setIsCode] = useState(false)
+    const [insertEmojiPos, setInsertEmojiPos] = useState([0, 0])
     const inputEl = useRef(null)
+
+    const emojiButtonId = 'chat-emoji-button'
+    const emojiRegex = /&#x[0-9A-Fa-f]+;/g
 
     // prevent Shift+Enter from actually typing new line character
     useEffect(() => {
@@ -25,7 +29,6 @@ const Chat = (props) => {
             setChatInnerHtml()
         }
         // if emoji was selected, update immediately
-        const emojiRegex = /&#x[0-9A-Fa-f]+;/g
         const selectedEmojis = chatInputValue.match(emojiRegex) || []
         const innerText = inputEl.current.innerText
         const shownEmojis = innerText.match(emojiRegex) || []
@@ -33,6 +36,41 @@ const Chat = (props) => {
             setChatInnerHtml()
         }
     }, [chatInputValue])
+
+    useEffect(() => {
+        function saveInputPosition(e) {
+            // if we are blurring away, stash the cursor position for later when we insert an emoji
+            if (document.activeElement.id === 'chat-input' && e.target.id !== 'chat-input') {
+                let node = e.target
+                let isSelectingEmoji = false
+                while (node && node.tagName !== 'BODY') {
+                    if (node.id === emojiButtonId) {
+                        isSelectingEmoji = true
+                        break
+                    } else {
+                        node = node.parentElement
+                    }
+                }
+                if (isSelectingEmoji) {
+                    let cursorStart = document.getSelection().anchorOffset
+                    let cursorEnd = document.getSelection().focusOffset
+                    if (cursorStart > cursorEnd) {
+                        const temp = cursorStart
+                        cursorStart = cursorEnd
+                        cursorEnd = temp
+                    }
+                    setInsertEmojiPos([cursorStart, cursorEnd])
+                } else {
+                    const currLength = inputEl.current.innerHTML.replace(emojiRegex, '_').length
+                    setInsertEmojiPos([currLength, currLength])
+                }
+            }
+            return
+            // see if the person clicked the emoji button
+        }
+        document.body.addEventListener('mousedown', saveInputPosition)
+        return () => document.body.removeEventListener('mousedown', saveInputPosition)
+    }, [])
 
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
@@ -42,6 +80,10 @@ const Chat = (props) => {
             message = formatCode(codeInputValue)
         } else {
             message = formatInput(chatInputValue)
+        }
+
+        if (!message) {
+            return
         }
 
         socket.emit(
@@ -93,8 +135,16 @@ const Chat = (props) => {
     }
 
     function handleSelectEmoji(e, emoji) {
-        setChatInputValue((prevState) => prevState + emoji.htmlCode)
+        setChatInputValue((prevState) => {
+            return (
+                prevState.slice(0, insertEmojiPos[0]) +
+                emoji.htmlCode +
+                prevState.slice(insertEmojiPos[1])
+            )
+        })
         inputEl.current.focus()
+        const currLength = inputEl.current.innerHTML.replace(emojiRegex, '_').length
+        setInsertEmojiPos([currLength, currLength])
     }
 
     function renderMessage(msg) {
@@ -166,7 +216,7 @@ const Chat = (props) => {
                     style={{ display: isCode ? 'none' : 'flex' }}
                     onInput={handleTypeChat}
                     onKeyDown={checkForSubmit}
-                    onBlur={setChatInnerHtml}
+                    // onBlur={setChatInnerHtml}
                     ref={inputEl}
                 />
                 <div>
@@ -201,7 +251,11 @@ const Chat = (props) => {
                     </p>
                 </div>
                 <div className={style.btnContainer}>
-                    <EmojiPicker handleSelectEmoji={handleSelectEmoji} isDisabled={isCode} />
+                    <EmojiPicker
+                        handleSelectEmoji={handleSelectEmoji}
+                        isDisabled={isCode}
+                        id={emojiButtonId}
+                    />
                     <CodeButton handleClick={handleClickCode} isCode={isCode} />
                     <ClapButton handleClick={handleClap} />
                 </div>
