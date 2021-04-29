@@ -40,6 +40,7 @@ export default class VideoMain extends React.Component {
             peerConnectionTrackMapper: {},
 
             sidebarState: '',
+            isUnviewedChat: false,
             isSidebarClosing: false,
             isSidebarOpening: false,
             isParticipantsExpanded: false,
@@ -206,6 +207,18 @@ export default class VideoMain extends React.Component {
                 const peerConnectionTrackMapper = { ...this.state.peerConnectionTrackMapper }
                 peerConnectionTrackMapper[clientToggledTrack.socket_id] = newPcTrackMap
                 this.setState({ peerConnectionTrackMapper })
+            }
+        }
+
+        if (
+            prevProps.chatMessages.length < this.props.chatMessages.length &&
+            this.state.sidebarState !== 'Chat'
+        ) {
+            const newChat = this.props.chatMessages.find(
+                (msg) => !prevProps.chatMessages.find((prevMsg) => prevMsg.id === msg.id)
+            )
+            if (newChat && newChat.type !== 'clap') {
+                this.setState({ isUnviewedChat: true })
             }
         }
     }
@@ -743,6 +756,10 @@ export default class VideoMain extends React.Component {
     })
 
     handleClickTopBarButton = (nextState) => {
+        if (this.state.isUnviewedChat && nextState === 'Chat') {
+            this.setState({ isUnviewedChat: false })
+        }
+
         if (this.state.sidebarState === nextState) {
             // close it
             this.setState({ isSidebarClosing: true, [`is${nextState}Expanded`]: false }, () => {
@@ -785,6 +802,7 @@ export default class VideoMain extends React.Component {
             errorMessage,
             peerConnectionTrackMapper,
             sidebarState,
+            isUnviewedChat,
             isSidebarClosing,
             isSidebarOpening,
             isParticipantsExpanded,
@@ -830,6 +848,7 @@ export default class VideoMain extends React.Component {
                         <TopBarButton
                             isExpanded={isChatExpanded}
                             title={`Chat`}
+                            isUnviewedChat={isUnviewedChat}
                             handleClick={() => this.handleClickTopBarButton('Chat')}
                         />
                     </div>
@@ -854,9 +873,7 @@ export default class VideoMain extends React.Component {
                         {sidebarState === 'Participants' && (
                             <ParticipantsList allClientsInRoom={allClientsInRoom} />
                         )}
-                        {sidebarState === 'Chat' && (
-                            <Chat {...this.props} chatMessages={chatMessages} />
-                        )}
+                        {sidebarState === 'Chat' && <Chat {...this.props} />}
                     </div>
                     <BroadcastVideo otherClientsInRoom={otherClientsInRoom} />
                 </div>

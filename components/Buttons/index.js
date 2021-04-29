@@ -12,6 +12,7 @@ import {
     faSortDown,
     faSortUp,
     faCode,
+    faExclamationCircle,
 } from '@fortawesome/free-solid-svg-icons'
 import Tooltip from '../Tooltip'
 
@@ -130,7 +131,7 @@ const CopyButton = (props) => {
     )
 }
 
-const TopBarButton = ({ title, isExpanded, handleClick }) => (
+const TopBarButton = ({ title, isExpanded, handleClick, isUnviewedChat }) => (
     <button
         onClick={handleClick}
         className={`${style.topBarButton} ${isExpanded ? style.dark : ''}`}
@@ -139,6 +140,11 @@ const TopBarButton = ({ title, isExpanded, handleClick }) => (
         <span className={isExpanded ? style.upArrow : style.downArrow}>
             <FontAwesomeIcon icon={isExpanded ? faSortUp : faSortDown} />
         </span>
+        {isUnviewedChat && (
+            <span className={style.unviewedNotification}>
+                <FontAwesomeIcon icon={faExclamationCircle} />
+            </span>
+        )}
     </button>
 )
 

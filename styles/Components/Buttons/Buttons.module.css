@@ -159,6 +159,7 @@
     background: none;
     padding: 5px;
     color: rgb(100, 100, 100);
+    position: relative;
 }
 .topBarButton:hover,
 .topBarButton:focus {
@@ -184,6 +185,12 @@
 .topBarButton .upArrow {
     position: relative;
     top: 5px;
+}
+.topBarButton .unviewedNotification {
+    color: red;
+    position: absolute;
+    top: 6px;
+    right: 0px;
 }
 
 .clapButton,
