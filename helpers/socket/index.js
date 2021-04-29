@@ -70,9 +70,10 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId, displayName)
         let [allClientsInRoom, chatMessages] = await Promise.all([
             _getAllClientsInRoom(room_pk),
             knex
-                .select('chats.*')
+                .select('chats.*', 'clients.display_name')
                 .table('room_clients')
                 .join('chats', 'room_clients.client_pk', '=', 'chats.client_pk')
+                .join('clients', 'clients.id', '=', 'room_clients.client_pk')
                 .where({ room_pk }),
         ])
 
@@ -80,15 +81,13 @@ async function handleJoinRoom(socket, io, roomId, clientDatabaseId, displayName)
             throw new Error('No clients found in room ' + roomId)
         }
         // serialize message structure
-        const clientIdNameMapper = {}
-        allClientsInRoom.forEach((c) => (clientIdNameMapper[c.id] = c.display_name))
         chatMessages = chatMessages.map((msg) => ({
             id: msg.id,
             clientPk: msg.client_pk,
             type: msg.type,
             message: msg.message,
             createdAt: msg.created_at,
-            senderName: clientIdNameMapper[msg.client_pk],
+            senderName: msg.display_name,
         }))
         io.to(roomId).emit('newJoin', { allClientsInRoom, chatMessages, newSocketId: socket.id })
     } catch (error) {
@@ -210,14 +209,16 @@ async function handleChat(socket, io, msg, roomId) {
     if (message.type === 'input') {
         message = xss(message)
     }
-    const chat = await knex('chats').insert({ type, message, client_pk: fromDbId }).returning('*')
+    let chat = await knex('chats').insert({ type, message, client_pk: fromDbId }).returning('*')
+    chat = chat[0]
+    const client = await knex('clients').select('display_name').where({ id: chat.client_pk })
     const serializedMsg = {
-        id: chat[0].id,
-        clientPk: chat[0].client_pk,
-        type: chat[0].type,
-        message: chat[0].message,
-        createdAt: chat[0].created_at,
-        fromSocket: socket.id,
+        id: chat.id,
+        clientPk: chat.client_pk,
+        type: chat.type,
+        message: chat.message,
+        createdAt: chat.created_at,
+        senderName: client[0].display_name,
     }
     io.to(roomId).emit('chat', serializedMsg)
 }
