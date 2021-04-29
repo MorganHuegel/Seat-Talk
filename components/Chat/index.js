@@ -12,6 +12,7 @@ const Chat = (props) => {
     const [isCode, setIsCode] = useState(false)
     const [insertEmojiPos, setInsertEmojiPos] = useState([0, 0])
     const inputEl = useRef(null)
+    const chatDiv = useRef(null)
 
     const emojiButtonId = 'chat-emoji-button'
     const emojiRegex = /&#x[0-9A-Fa-f]+;/g
@@ -71,6 +72,11 @@ const Chat = (props) => {
         document.body.addEventListener('mousedown', saveInputPosition)
         return () => document.body.removeEventListener('mousedown', saveInputPosition)
     }, [])
+
+    useEffect(() => {
+        // scroll to bottom of chat div to see newest message
+        chatDiv.current.scrollTop = chatDiv.current.scrollHeight
+    }, [chatMessages])
 
     function handleChatSubmit(e) {
         if (e) e.preventDefault()
@@ -199,7 +205,7 @@ const Chat = (props) => {
     const newLines = codeInputValue.match(/\r\n|\n|\r/gm) || []
     return (
         <div className={style.container}>
-            <div>{chatMessages.map(renderMessage)}</div>
+            <div ref={chatDiv}>{chatMessages.map(renderMessage)}</div>
             <form onSubmit={handleChatSubmit}>
                 <div className={style.codeInput} style={{ display: isCode ? 'block' : 'none' }}>
                     <textarea
@@ -216,7 +222,6 @@ const Chat = (props) => {
                     style={{ display: isCode ? 'none' : 'flex' }}
                     onInput={handleTypeChat}
                     onKeyDown={checkForSubmit}
-                    // onBlur={setChatInnerHtml}
                     ref={inputEl}
                 />
                 <div>
